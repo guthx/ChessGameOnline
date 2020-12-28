@@ -1,0 +1,50 @@
+@media (max-width: 767px) {
+    /* On small screens, the nav menu spans the full width of the screen. Leave a space for it. */
+    body {
+        padding-top: 50px;
+    }
+
+    
+}
+
+html {
+    font-size: 16px;
+}
+
+.black-square {
+    background-color: rebeccapurple;
+    width: 60px;
+    height: 60px;
+}
+
+.white-square {
+    background-color: aliceblue;
+    width: 60px;
+    height: 60px;
+}
+
+.highlighted-square {
+    background-color: cornflowerblue;
+    width: 60px;
+    height: 60px;
+}
+
+.winner {
+    font-size: 26px;
+    align-self: center;
+}
+
+.board {
+    max-width: 480px;
+    align-self: center;
+    padding-top: 50px;
+}
+
+.board-container {
+    display:flex;
+    justify-content: center;
+}
+
+.button {
+    margin-top: 20px;
+}
