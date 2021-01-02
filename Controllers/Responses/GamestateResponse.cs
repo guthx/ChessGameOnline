@@ -1,5 +1,6 @@
 ﻿using ChessGame;
 using ChessGameOnline.Services;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +10,12 @@ namespace ChessGameOnline.Controllers.Responses
 {
     public class PieceResponse
     {
-        public string Type;
-        public string Color;
-        public List<Position> ValidMoves;
+       
+        public string Type { get; set; }
+     
+        public string Color { get; set; }
+      
+        public List<Position> ValidMoves { get; set; }
 
         public PieceResponse(Piece piece)
         {
@@ -22,10 +26,17 @@ namespace ChessGameOnline.Controllers.Responses
     }
     public class GamestateResponse
     {
-        public PieceResponse[,] Board;
-        public string ToMove;
-        public int TurnCount;
-        public bool GameOver;
+     
+        public PieceResponse[,] Board { get; set; }
+    
+        public string ToMove { get; set; }
+   
+        public int TurnCount {get;set;}
+  
+        public bool GameOver { get; set; }
+        
+        public int WhiteTime { get; set; }
+        public int BlackTime { get; set; }
 
         public GamestateResponse(MultiplayerGamestate gamestate)
         {
@@ -38,6 +49,8 @@ namespace ChessGameOnline.Controllers.Responses
             ToMove = gamestate.ToMove.ToString();
             TurnCount = gamestate.TurnCount;
             GameOver = gamestate.GameOver;
+            WhiteTime = gamestate.WhiteRemainingTime;
+            BlackTime = gamestate.BlackRemainingTime;
         }
     }
 }

@@ -1,10 +1,16 @@
 ﻿using ChessGameOnline.Controllers.Responses;
 using ChessGameOnline.Services;
 using ChessGameOnline.Services.Responses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using static ChessGameOnline.Services.GameService;
 
@@ -14,11 +20,50 @@ namespace ChessGameOnline.Controllers
     public class GameController : Controller
     {
         private GameService _gameService;
+        private TcpServer _tcpServer;
+        private readonly string _jwtKey;
 
-        public GameController(GameService gameService)
+        public GameController(GameService gameService, TcpServer tcpServer, IConfiguration config)
         {
             _gameService = gameService;
+            _tcpServer = tcpServer;
+            _jwtKey = config.GetSection("JwtConfig").GetSection("jwtKey").Value;
         }
+
+        [HttpGet("jwt")]
+        public string GetJwt()
+        {
+            var guid = Guid.NewGuid();
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_jwtKey);
+            var signingCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature);
+            /*
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            */
+            var token = new JwtSecurityToken("localhost", "localhost", new[]{
+                new Claim(ClaimTypes.NameIdentifier, guid.ToString())
+            }, null, null, signingCredentials);
+            return tokenHandler.WriteToken(token);
+        }
+
+        [HttpGet("test")]
+        [Authorize]
+        public string Test()
+        {
+            return "works";
+        }
+        /*
+        [HttpGet("test")]
+        public async Task<StatusCodeResult> Test()
+        {
+            await Task.Run(() => _tcpServer.Verify());
+            return StatusCode(200);
+        }
+
         [HttpPost("newgame")]
         public ActionResult<int> CreateGame([FromBody] string userId)
         {
@@ -104,5 +149,6 @@ namespace ChessGameOnline.Controllers
                 return StatusCode(500);
             }
         }
+        */
     }
 }

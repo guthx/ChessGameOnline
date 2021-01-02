@@ -48,3 +48,19 @@ html {
 .button {
     margin-top: 20px;
 }
+
+.timer {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.highlighted {
+    background-color: coral;
+}
+
+.timers-container {
+    padding-top: 50px;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+}

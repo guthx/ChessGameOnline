@@ -1,9 +1,25 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import Cookies from 'js-cookie';
 import { GridList, GridListTile, Dialog, DialogTitle, Typography, Button } from '@material-ui/core';
 import { maxWidth, fontSize } from '@material-ui/system';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
+import { Col, Row } from 'react-bootstrap';
+import { Container } from '@material-ui/core';
+import Timers from '../components/Timers';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
+import WHITE_QUEEN from '../images/WHITE_Queen.png';
+import WHITE_ROOK from '../images/WHITE_Rook.png';
+import WHITE_BISHOP from '../images/WHITE_Bishop.png';
+import WHITE_KNIGHT from '../images/WHITE_Knight.png';
+import WHITE_PAWN from '../images/WHITE_Pawn.png';
+import WHITE_KING from '../images/WHITE_King.png';
+import BLACK_QUEEN from '../images/BLACK_Queen.png';
+import BLACK_ROOK from '../images/BLACK_Rook.png';
+import BLACK_BISHOP from '../images/BLACK_Bishop.png';
+import BLACK_KNIGHT from '../images/BLACK_Knight.png';
+import BLACK_PAWN from '../images/BLACK_Pawn.png';
+import BLACK_KING from '../images/BLACK_King.png';
+
 
 
 export function Game(props) {
@@ -12,17 +28,22 @@ export function Game(props) {
     const [gameState, setGameState] = useState({
         board: [],
         toMove: [],
-        turnCount: 0
+        turnCount: 0,
+        whiteTime: 0,
+        blackTime: 0
     });
-    const [toMove, setToMove] = useState(true);
+    const [toMove, setToMove] = useState(false);
     const [color, setColor] = useState("SPECTATE");
+    const colorRef = useRef();
+    colorRef.current = color;
     const [selectedPiece, setSelectedPiece] = useState({
         validMoves: [],
         id: ""
     });
     const [awaitingPromotion, setAwaitingPromotion] = useState(null);
     const [checkmate, setCheckmate] = useState(false);
-    
+    const [winner, setWinner] = useState(null);
+    /*
     useEffect(() => {
         if (sessionId == null) {
             fetch("/api/SampleData/guid")
@@ -66,7 +87,7 @@ export function Game(props) {
         }
     }, [toMove]);
 
-    /*
+    */
     useEffect(() => {
         if (awaitingPromotion != null) {
             var file = awaitingPromotion[0].charCodeAt() - 'A'.charCodeAt();
@@ -114,33 +135,50 @@ export function Game(props) {
             });
         }
     }, [awaitingPromotion]);
-    */
+    
     const move = (src, dst) => {
         if (toMove == true) {
-            var data = {src: src, dst: dst, userId: sessionId}
-            fetch("api/Game/move", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-                .then(res => res.json())
-                .then(response => {
-                    console.log(response);
-                    if (response.moveResult == "MOVED") {
-                        setGameState(response.gamestate);
-                        setToMove(false);
-                    } else if (response.moveResult == "AWAITING_PROMOTION") {
-                        setAwaitingPromotion(dst);
-                    } else if (response.moveResult == "CHECKMATE") {
-                        setGameState(response.gamestate);
-                        setCheckmate(true);
-                    }
-                });
+            props.hubConnection.invoke('Move', src, dst);
         }
     };
     
+
+    useEffect(() => {
+        props.hubConnection.off('opponentReady');
+        props.hubConnection.on('updateGameState', gamestateJson => {
+            let gamestate = JSON.parse(gamestateJson);
+            setGameState(gamestate);
+            if (gamestate.toMove == colorRef.current)
+                setToMove(true);
+            else
+                setToMove(false);
+            setAwaitingPromotion(null);
+            if (gamestate.gameOver) {
+                if (gamestate.toMove == "WHITE")
+                    setWinner("BLACK");
+                else
+                    setWinner("WHITE");
+                setToMove(false);
+                setCheckmate(true);
+            }
+        });
+        props.hubConnection.on('timerElapsed', winner => {
+            setToMove(false);
+            setWinner(winner);
+            setCheckmate(true);
+        });
+        props.hubConnection.on('awaitingPromotion', position => {
+            setAwaitingPromotion(position);
+        });
+        let id = gameId;
+        props.hubConnection.invoke('JoinGame', parseInt(id))
+            .then(color => {
+                setColor(color);
+                props.hubConnection.invoke("Update");
+            });
+        
+    }, [gameId]);
+
     const Board = () => {
         if (gameState != 0)
             return (
@@ -160,7 +198,7 @@ export function Game(props) {
             squares = Squares();
             return (
                 <div className={'board'}>
-                    <GridList cellHeight={60} cols={8} spacing={0}>
+                    <GridList cellHeight={'auto'} cols={8} spacing={0}>
                         {squares.map((row) => row.map((tile) => (
                             <div>
                                 {tile}
@@ -174,11 +212,13 @@ export function Game(props) {
         else return null;
     }
 
+    
     var draggedPiece;
 
     const dragStartPiece = (e, f, r) => {
         highlightValidMoves(f, r);
         draggedPiece = { piece: gameState.board[f][r], id: e.currentTarget.id };
+        
     }
 
     const dropPiece = (e) => {
@@ -193,7 +233,7 @@ export function Game(props) {
             }
         }
     }
-
+    
     const Tile = (props) => {
         var square = gameState.board[props.f][props.r];
         var tile;
@@ -337,9 +377,9 @@ export function Game(props) {
     };
 
     
-
+    
     const onSquareClick = (f, r, e) => {
-
+        console.log(toMove);
         if (toMove == true) {
             if (selectedPiece.validMoves.find((move) => move.file == f && move.rank == r) != undefined) {
                 move(selectedPiece.id, e.currentTarget.id);
@@ -353,9 +393,9 @@ export function Game(props) {
             }
         }
     }
-
+    
     const highlightValidMoves = (f, r) => {
-        if (toMove == true) {
+        if (toMove == true && gameState.board[f][r].color == color) {
             var validMoves = gameState.board[f][r].validMoves;
             validMoves.forEach(move => {
                 var file = String.fromCharCode(move.file + 'A'.charCodeAt());
@@ -365,57 +405,43 @@ export function Game(props) {
         }
     }
 
+    
     const promote = (type) => {
-        var data = { userId: sessionId, pieceType: type };
-        fetch("api/Game/promote", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(res => res.json())
-            .then(response => {
-                if (response.moveResult == "MOVED") {
-                    setAwaitingPromotion(null);
-                    setGameState(response.gamestate);
-                    setToMove(false);
-                }
-            });
+        props.hubConnection.invoke('Promote', type);
     }
-
+    
     const PieceImage = (tile) => {
         
         var path = "../images/" + tile.color + "_" + tile.type + ".png";
         if (tile.color == "WHITE") {
             switch (tile.type) {
                 case 'Pawn':
-                    return (<img src={require('../images/WHITE_Pawn.png')} height="60px" width="60px" />);
+                    return (<img src={WHITE_PAWN} height="60px" width="60px" />);
                 case 'Knight':
-                    return (<img src={require('../images/WHITE_Knight.png')} height="60px" width="60px"/>);
+                    return (<img src={WHITE_KNIGHT} height="60px" width="60px" />);
                 case 'Bishop':
-                    return (<img src={require('../images/WHITE_Bishop.png')} height="60px" width="60px"/>);
+                    return (<img src={WHITE_BISHOP} height="60px" width="60px" />);
                 case 'Rook':
-                    return (<img src={require('../images/WHITE_Rook.png')} height="60px" width="60px"/>);
+                    return (<img src={WHITE_ROOK} height="60px" width="60px" />);
                 case 'Queen':
-                    return (<img src={require('../images/WHITE_Queen.png')} height="60px" width="60px"/>);
+                    return (<img src={WHITE_QUEEN} height="60px" width="60px" />);
                 case 'King':
-                    return (<img src={require('../images/WHITE_King.png')} height="60px" width="60px"/>);
+                    return (<img src={WHITE_KING} height="60px" width="60px" />);
             }
         } else {
             switch (tile.type) {
                 case 'Pawn':
-                    return (<img src={require('../images/BLACK_Pawn.png')} height="60px" width="60px"/>);
+                    return (<img src={BLACK_PAWN} height="60px" width="60px" />);
                 case 'Knight':
-                    return (<img src={require('../images/BLACK_Knight.png')} height="60px" width="60px"/>);
+                    return (<img src={BLACK_KNIGHT} height="60px" width="60px" />);
                 case 'Bishop':
-                    return (<img src={require('../images/BLACK_Bishop.png')} height="60px" width="60px"/>);
+                    return (<img src={BLACK_BISHOP} height="60px" width="60px" />);
                 case 'Rook':
-                    return (<img src={require('../images/BLACK_Rook.png')} height="60px" width="60px"/>);
+                    return (<img src={BLACK_ROOK} height="60px" width="60px" />);
                 case 'Queen':
-                    return (<img src={require('../images/BLACK_Queen.png')} height="60px" width="60px"/>);
+                    return (<img src={BLACK_QUEEN} height="60px" width="60px" />);
                 case 'King':
-                    return (<img src={require('../images/BLACK_King.png')} height="60px" width="60px"/>);
+                    return (<img src={BLACK_KING} height="60px" width="60px" />);
             }
         }
     } 
@@ -445,17 +471,12 @@ export function Game(props) {
         );
     });
 
-    const EndGame = () => {
-        var winner;
-        if (gameState.toMove == "WHITE")
-            winner = "BLACK";
-        else
-            winner = "WHITE";
+    const EndGame = (props) => {
         return (
             <Dialog open={checkmate} fullWidth={true} maxWidth={'xs'}>
                 <DialogTitle id="dialog-title">Game over!</DialogTitle>
                 <div class="winner">
-                    {winner} wins
+                    {props.winner} wins
                 </div>
                 <Button variant="contained" size="large" color="primary" className={classes.button} onClick={() => Rematch()}>Play again</Button>
             </Dialog>
@@ -464,12 +485,19 @@ export function Game(props) {
 
     const Rematch = () => {
         window.location.reload(false);
-    }
+    };
 
     return (
         <div className={'board-container'}>
             <Board2 />
-            <EndGame />
+            <Timers
+                whiteTime={gameState.whiteTime}
+                blackTime={gameState.blackTime}
+                toMove={gameState.toMove}
+                turnCount={gameState.turnCount}
+                color={color}
+            />
+            <EndGame winner={winner} />
         </div>
     );
 }

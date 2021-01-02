@@ -4,11 +4,15 @@ import { withRouter } from 'react-router-dom';
 import { Col, Grid, Row } from 'react-bootstrap';
 import { Container, Button } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
+import  Timer from '../components/Timer'
 
-export const Test = withRouter(({ history }) => {
+
+export function Test(props) {
+    
     const [sessionId, setSessionId] = useState("");
     const [gameId, setGameId] = useState(0);
     const [awaiting, setAwaiting] = useState(false);
+    /*
     useEffect(() => {
         var cookieId = Cookies.get('sessionId');
         if (cookieId != undefined)
@@ -23,7 +27,7 @@ export const Test = withRouter(({ history }) => {
                 });
         }
     });
-    /*
+    
     useEffect(() => {
         if (gameId != 0) {
             fetch("/api/Game/game?userId=" + sessionId)
@@ -33,7 +37,7 @@ export const Test = withRouter(({ history }) => {
                 });
         }
     }, [gameId]);
-    */
+    
     var createGame = () => {
         var data = { sessionId };
         console.log(data);
@@ -61,6 +65,20 @@ export const Test = withRouter(({ history }) => {
                 history.push('/game/' + id);
             });
     }
+    */
+
+    const createGame = () => {
+        props.hubConnection.invoke("CreateGame", 3000000, 2000)
+            .then(id => {
+                props.hubConnection.on("opponentReady", () => {
+                    console.log('/game/' + id);
+                    props.history.push('/game/' + id);
+                });
+                setGameId(id);
+                setAwaiting(true);
+            });
+        
+    }
 
     const AwaitingOpponent = () => {
         if (awaiting == true)
@@ -78,6 +96,7 @@ export const Test = withRouter(({ history }) => {
         else
             return null;
     }
+    
 
     const useStyles = makeStyles((theme) => ({
         button: {
@@ -86,7 +105,7 @@ export const Test = withRouter(({ history }) => {
     }));
 
     const classes = useStyles();
-
+    console.log(props);
     return (
         <Container fluid height={'100%'}>
             <Col sm={3}></Col>
@@ -95,7 +114,8 @@ export const Test = withRouter(({ history }) => {
                     <img src={require('../images/horse.jpg')}></img>
                 </Row>
                 <Row className={'h-25'}>
-                    <Button variant="contained" size="large" color="primary" className={classes.button} onClick={createGame}>Create new game</Button>
+                    <Button variant="contained" size="large" color="primary" className={classes.button} onClick={createGame} >Create new game</Button>
+                    <Timer time={241} class={'timer highlighted'}/>
                 </Row>
                 <Row className={'h-25'}>
                     <AwaitingOpponent />
@@ -104,4 +124,4 @@ export const Test = withRouter(({ history }) => {
             <Col sm={3}></Col>
         </Container>
     );
-});
+}
