@@ -15,12 +15,14 @@ html {
     background-color: rebeccapurple;
     width: 60px;
     height: 60px;
+    color: aliceblue;
 }
 
 .white-square {
     background-color: aliceblue;
     width: 60px;
     height: 60px;
+    color: rebeccapurple;
 }
 
 .highlighted-square {
@@ -36,13 +38,16 @@ html {
 
 .board {
     max-width: 480px;
-    align-self: center;
-    padding-top: 50px;
+    grid-column: 3;
+    font-size: 13px;
+    font-weight: bold;
 }
 
 .board-container {
-    display:flex;
-    justify-content: center;
+    display:grid;
+    padding-top: 50px;
+    grid-template-columns: auto 235px 480px max-content auto;
+    grid-column-gap: 10px;
 }
 
 .button {
@@ -50,8 +55,9 @@ html {
 }
 
 .timer {
-    font-size: 24px;
+    font-size: 32px;
     font-weight: bold;
+    padding: 5px;
 }
 
 .highlighted {
@@ -59,8 +65,49 @@ html {
 }
 
 .timers-container {
-    padding-top: 50px;
     display: flex;
     justify-content: space-between;
     flex-direction: column;
+    grid-column: 4;
+}
+
+#searching {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 24px;
+}
+#spinner {
+    padding-top: 6px;
+}
+
+#draw {
+    grid-column: 2;
+    display: grid;
+    grid-template-rows: 220px 40px 30px auto;
+    grid-template-columns: 235px;
+}
+
+#draw-response {
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-column-gap: 8px;
+}
+
+.square-label-file {
+    position: absolute;
+    margin-left: 3px;
+    margin-top: 40px;
+    opacity: 0.85;
+}
+
+.square-label-rank {
+    position: absolute;
+    margin-left: 50px;
+    opacity: 0.85;
+}
+
+.square-label-double {
+    position: absolute;
 }

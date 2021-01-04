@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Timers;
 
 namespace ChessGameOnline.Services
 {
     [Authorize]
     public class GameHub : Hub
     {
-        private GameService _gameService;
+        private static GameService _gameService;
         public static Dictionary<string, List<string>> UsersConnections = new Dictionary<string, List<string>>();
 
         public GameHub(GameService gameService) : base()
@@ -137,6 +138,106 @@ namespace ChessGameOnline.Services
             }
         }
 
-      
+        public async Task SearchGame(int time, int increment)
+        {
+            var timeControl = new TimeControl
+            {
+                Time = time,
+                Increment = increment
+            };
+            string player1;
+            if (!_gameService.PlayerSearchingGame.TryGetValue(timeControl, out player1))
+                _gameService.PlayerSearchingGame.Add(timeControl, Context.UserIdentifier);
+            else if (player1 == Context.UserIdentifier) { }
+            else
+            {
+                _gameService.PlayerSearchingGame.Remove(timeControl);
+                var player2 = Context.UserIdentifier;
+                var coinToss = new Random().Next(0, 2);
+                int gameId;
+                if (coinToss == 0)
+                {
+                    gameId = _gameService.CreateGame(player1, time, increment);
+                    _gameService.Gamestates[gameId].Black = player2;
+                } else
+                {
+                    gameId = _gameService.CreateGame(player2, time, increment);
+                    _gameService.Gamestates[gameId].Black = player1;
+                }
+               //_gameService.PlayersGamestates.Add(player1, gameId);
+               // _gameService.PlayersGamestates.Add(player2, gameId);
+                foreach (var connection in UsersConnections[player1])
+                {
+                    await Groups.AddToGroupAsync(connection, gameId.ToString());
+                }
+                foreach (var connection in UsersConnections[player2])
+                {
+                    await Groups.AddToGroupAsync(connection, gameId.ToString());
+                }
+                await Clients.Group(gameId.ToString()).SendAsync("gameFound", gameId);
+            }
+            
+        }
+
+        public async Task ProposeDraw()
+        {
+            int gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                var gamestate = _gameService.Gamestates[gameId];
+                if (gamestate.White == Context.UserIdentifier)
+                    gamestate.DrawProposed = "WHITE";
+                else if (gamestate.Black == Context.UserIdentifier)
+                    gamestate.DrawProposed = "BLACK";
+                gamestate.DrawTimer.Start();
+                await Clients.OthersInGroup(gameId.ToString()).SendAsync("drawProposed");
+            }
+        }
+
+        public async Task RespondDraw(bool response)
+        {
+            int gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                var gamestate = _gameService.Gamestates[gameId];
+                if (gamestate.White == Context.UserIdentifier && gamestate.DrawProposed == "BLACK" ||
+                    gamestate.Black == Context.UserIdentifier && gamestate.DrawProposed == "WHITE")
+                {
+                    gamestate.DrawTimer.Stop();
+                    gamestate.DrawProposed = String.Empty;
+                    if (response == false)
+                    {
+                        await Clients.Group(gameId.ToString()).SendAsync("drawRejected");
+                    } else
+                    {
+                        await Clients.Group(gameId.ToString()).SendAsync("drawAccepted");
+                        _gameService.RemoveGame(gameId);
+                    }
+                }
+            }
+        }
+
+        public async Task Resign()
+        {
+            int gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                var gamestate = _gameService.Gamestates[gameId];
+                if (gamestate.White == Context.UserIdentifier)
+                {
+                    gamestate.BlackTimer.Stop();
+                    gamestate.WhiteTimer.Stop();
+                    _gameService.RemoveGame(gameId);
+                    await Clients.Group(gameId.ToString()).SendAsync("gameResigned", "BLACK");
+                }
+                else if (gamestate.Black == Context.UserIdentifier)
+                {
+                    gamestate.BlackTimer.Stop();
+                    gamestate.WhiteTimer.Stop();
+                    _gameService.RemoveGame(gameId);
+                    await Clients.Group(gameId.ToString()).SendAsync("gameResigned", "WHITE");
+                }
+            }
+        }
     }
 }

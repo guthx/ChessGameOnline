@@ -1,10 +1,9 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import Cookies from 'js-cookie';
-import { GridList, GridListTile, Dialog, DialogTitle, Typography, Button } from '@material-ui/core';
+import { GridList, GridListTile, Dialog, DialogTitle, Typography, Button, Container } from '@material-ui/core';
 import { maxWidth, fontSize } from '@material-ui/system';
 import { withStyles, makeStyles } from '@material-ui/core/styles';
 import { Col, Row } from 'react-bootstrap';
-import { Container } from '@material-ui/core';
 import Timers from '../components/Timers';
 import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import WHITE_QUEEN from '../images/WHITE_Queen.png';
@@ -20,7 +19,12 @@ import BLACK_KNIGHT from '../images/BLACK_Knight.png';
 import BLACK_PAWN from '../images/BLACK_Pawn.png';
 import BLACK_KING from '../images/BLACK_King.png';
 
-
+const drawStates = {
+    NEUTRAL: 1,
+    WAITING: 2,
+    PROPOSED: 3,
+    REJECTED: 4
+}
 
 export function Game(props) {
     const [sessionId, setSessionId] = useState(Cookies.get('sessionId'));
@@ -43,6 +47,7 @@ export function Game(props) {
     const [awaitingPromotion, setAwaitingPromotion] = useState(null);
     const [checkmate, setCheckmate] = useState(false);
     const [winner, setWinner] = useState(null);
+    const [drawState, setDrawState] = useState(drawStates.NEUTRAL);
     /*
     useEffect(() => {
         if (sessionId == null) {
@@ -131,7 +136,9 @@ export function Game(props) {
             setGameState({
                 board: board,
                 toMove: gameState.toMove,
-                turnCount: gameState.turnCount
+                turnCount: gameState.turnCount,
+                whiteTime: gameState.whiteTime,
+                blackTime: gameState.blackTime
             });
         }
     }, [awaitingPromotion]);
@@ -169,6 +176,24 @@ export function Game(props) {
         });
         props.hubConnection.on('awaitingPromotion', position => {
             setAwaitingPromotion(position);
+        });
+        props.hubConnection.on('drawAccepted', () => {
+            setWinner("DRAW");
+            setCheckmate(true);
+            setToMove(false);
+            setDrawState(drawStates.NEUTRAL);
+        });
+        props.hubConnection.on('drawRejected', () => {
+            setDrawState(drawStates.REJECTED);
+            const changeState = () => setDrawState(drawStates.NEUTRAL);
+            setTimeout(() => {
+                changeState();
+                clearTimeout(changeState);
+            }, 4000);
+            
+        });
+        props.hubConnection.on('drawProposed', () => {
+            setDrawState(drawStates.PROPOSED);
         });
         let id = gameId;
         props.hubConnection.invoke('JoinGame', parseInt(id))
@@ -223,7 +248,7 @@ export function Game(props) {
 
     const dropPiece = (e) => {
         e.preventDefault();
-        if (draggedPiece.piece.color == color && toMove == true) {
+        if (draggedPiece != undefined && draggedPiece.piece.color == color && toMove == true) {
             let file = Number.parseInt(e.currentTarget.getAttribute('f'));
             let rank = Number.parseInt(e.currentTarget.getAttribute('r'));
            
@@ -239,6 +264,61 @@ export function Game(props) {
         var tile;
         var file = String.fromCharCode('A'.charCodeAt() + props.f);
         var rank = props.r + 1;
+        var label = null;
+        if (color == "WHITE" || color == "SPECTATE") {
+            if (props.f == 7 && props.r == 0)
+                label = (
+                    <div class={'square-label-double'}>
+                        <div class={'square-label-file'}>
+                            {file.toLowerCase()}
+                        </div>
+                        <div class={'square-label-rank'}>
+                            {rank}
+                        </div>
+                    </div>
+                );
+            else if (props.f == 7) {
+                label = (
+                    <div class={'square-label-rank'}>
+                        {rank}
+                    </div>
+                );
+            }
+            else if (props.r == 0) {
+                label = (
+                    <div class={'square-label-file'}>
+                        {file.toLowerCase()}
+                    </div>
+                );
+            }
+        } else {
+            if (props.f == 0 && props.r == 7)
+                label = (
+                    <div class={'square-label-double'}>
+                        <div class={'square-label-file'}>
+                            {file.toLowerCase()}
+                        </div>
+                        <div class={'square-label-rank'}>
+                            {rank}
+                        </div>
+                    </div>
+                );
+            else if (props.f == 0) {
+                label = (
+                    <div class={'square-label-rank'}>
+                        {rank}
+                    </div>
+                );
+            }
+            else if (props.r == 7) {
+                label = (
+                    <div class={'square-label-file'}>
+                        {file.toLowerCase()}
+                    </div>
+                );
+            }
+        }
+
         if (square != null) {
             tile = (
                 <div
@@ -256,6 +336,7 @@ export function Game(props) {
                         f={props.f}
                         r={props.r}
                     >
+                        {label}
                         <PieceImage color={square.color} type={square.type} />
                     </GridListTile>
                 </div>
@@ -267,6 +348,7 @@ export function Game(props) {
                     onDragOver={e => e.preventDefault()}
                 >
                     <GridListTile onClick={(e) => onSquareClick(props.f, props.r, e)} onDrop={e => dropPiece(e)} id={file + rank} cols={1} className={props.class} f={props.f} r={props.r}>
+                        {label}
                     </GridListTile>
                 </div>
             );
@@ -403,12 +485,21 @@ export function Game(props) {
                 document.getElementById(file + rank).className = 'highlighted-square';
             });
         }
-    }
+    };
 
     
     const promote = (type) => {
         props.hubConnection.invoke('Promote', type);
-    }
+    };
+
+    const proposeDraw = () => {
+        props.hubConnection.invoke('ProposeDraw');
+        setDrawState(drawStates.WAITING);
+    };
+
+    const respondDraw = (response) => {
+        props.hubConnection.invoke('RespondDraw', response);
+    };
     
     const PieceImage = (tile) => {
         
@@ -450,6 +541,10 @@ export function Game(props) {
         button: {
             margin: "14px",
             marginTop: "20px"
+        },
+        drawButton: {
+            alignSelf: "center",
+            gridRow: "2"
         }
     }));
 
@@ -472,11 +567,21 @@ export function Game(props) {
     });
 
     const EndGame = (props) => {
-        return (
+        if (props.winner == "BLACK" || props.winner == "WHITE")
+            return (
+                <Dialog open={checkmate} fullWidth={true} maxWidth={'xs'}>
+                    <DialogTitle id="dialog-title">Game over</DialogTitle>
+                    <div class="winner">
+                        {props.winner} wins
+                </div>
+                    <Button variant="contained" size="large" color="primary" className={classes.button} onClick={() => Rematch()}>Play again</Button>
+                </Dialog>
+            );
+        else return (
             <Dialog open={checkmate} fullWidth={true} maxWidth={'xs'}>
-                <DialogTitle id="dialog-title">Game over!</DialogTitle>
+                <DialogTitle id="dialog-title">Game over</DialogTitle>
                 <div class="winner">
-                    {props.winner} wins
+                    Draw
                 </div>
                 <Button variant="contained" size="large" color="primary" className={classes.button} onClick={() => Rematch()}>Play again</Button>
             </Dialog>
@@ -487,8 +592,75 @@ export function Game(props) {
         window.location.reload(false);
     };
 
+    const Draw = () => {
+        var component;
+        switch (drawState) {
+            case drawStates.NEUTRAL:
+                component = (
+                    <div id={'draw'}>
+                        <Button
+                            variant="contained"
+                            size="medium"
+                            color="primary"
+                            className={classes.drawButton}
+                            onClick={() => proposeDraw()}>
+                            Propose draw
+                        </Button>
+                    </div>
+                );
+                break;
+            case drawStates.PROPOSED:
+                component = (
+                    <div id={'draw'}>
+                        <Button
+                            variant="contained"
+                            size="medium"
+                            color="primary"
+                            className={classes.drawButton}>
+                            Opponent proposed draw
+                        </Button>
+                        <div id={'draw-response'}>
+                            <Button variant="contained" size="small" color="secondary" onClick={() => respondDraw(true)}>Accept</Button>
+                            <Button variant="contained" size="small" color="secondary" onClick={() => respondDraw(false)}>Decline</Button>
+                        </div>
+                    </div>
+                );
+                break;
+            case drawStates.REJECTED:
+                component = (
+                    <div id={'draw'}>
+                        <Button
+                            variant="contained"
+                            size="medium"
+                            color="primary"
+                            className={classes.drawButton}
+                            disabled={'true'}>
+                            Draw rejected
+                        </Button>
+                    </div>
+                );
+                break;
+            case drawStates.WAITING:
+                component = (
+                    <div id={'draw'}>
+                        <Button
+                            variant="contained"
+                            size="medium"
+                            color="primary"
+                            className={classes.drawButton}
+                            disabled={'true'}>
+                            Draw proposed
+                        </Button>
+                    </div>
+                );
+                break;
+        }
+        return component;
+    }
+
     return (
         <div className={'board-container'}>
+            <Draw />
             <Board2 />
             <Timers
                 whiteTime={gameState.whiteTime}

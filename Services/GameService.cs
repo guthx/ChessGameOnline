@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using ChessGame;
 using ChessGameOnline.Controllers.Responses;
 using ChessGameOnline.Services.Responses;
@@ -9,10 +10,33 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace ChessGameOnline.Services
 {
+    public class TimeControl
+    {
+        public int Time { get; set; }
+        public int Increment { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if ((obj == null) || !this.GetType().Equals(obj.GetType()))
+            {
+                return false;
+            }
+            else
+            {
+                TimeControl t = (TimeControl)obj;
+                return (Time == t.Time) && (Increment == t.Increment);
+            }
+        }
+        public override int GetHashCode()
+        {
+            return (Time << 2) ^ Increment;
+        }
+    }
     public class GameService
     {
         public Dictionary<string, int> PlayersGamestates;
         public Dictionary<int, MultiplayerGamestate> Gamestates;
+        public Dictionary<TimeControl, string> PlayerSearchingGame;
         private int nextGameId;
         private IHubContext<GameHub> _hubContext;
         public GameService(IHubContext<GameHub> hubContext)
@@ -21,10 +45,12 @@ namespace ChessGameOnline.Services
             Gamestates = new Dictionary<int, MultiplayerGamestate>();
             nextGameId = 1;
             _hubContext = hubContext;
+            PlayerSearchingGame = new Dictionary<TimeControl, string>();
         }
 
-        private void RemoveGame(int gameId)
+        public void RemoveGame(int gameId)
         {
+            Task.Delay(10000).Wait();
             Gamestates.Remove(gameId);
             var players = PlayersGamestates.Where((pair) => pair.Value == gameId);
             foreach(var player in players)
@@ -46,14 +72,14 @@ namespace ChessGameOnline.Services
             int gameId;
             if (inGame)
             {
-                PlayersGamestates[player] = prevGame;
-                PlayersGamestates.Remove(Gamestates[prevGame].Black);
+             //   PlayersGamestates[player] = prevGame;
+              //  PlayersGamestates.Remove(Gamestates[prevGame].Black);
                 Gamestates[prevGame] = gamestate;
                 gameId = prevGame;
             } else
             {
                 Gamestates.Add(nextGameId, gamestate);
-                PlayersGamestates.Add(player, nextGameId);
+              //  PlayersGamestates.Add(player, nextGameId);
                 gameId = nextGameId;
                 nextGameId += 1;
             }
@@ -67,7 +93,13 @@ namespace ChessGameOnline.Services
                 _hubContext.Clients.Group(gameId.ToString()).SendAsync("timerElapsed", "WHITE");
                 RemoveGame(gameId);
             };
-            return PlayersGamestates[player];
+            gamestate.DrawTimer.Elapsed += (arg, e) =>
+            {
+                gamestate.DrawProposed = String.Empty;
+                _hubContext.Clients.Group(gameId.ToString()).SendAsync("drawRejected");
+            };
+           
+            return gameId;
         }
         
         public class JoinGameResponse
@@ -75,6 +107,7 @@ namespace ChessGameOnline.Services
             public GamestateResponse Gamestate { get; set; }
             public string Color { get; set; }
         }
+        /*
         public string JoinGame(String player, int gameId)
         {
             if (Gamestates[gameId] != null)
@@ -103,6 +136,40 @@ namespace ChessGameOnline.Services
                 return String.Empty;
             }
         }
+        */
+        public string JoinGame(String player, int gameId)
+        {
+            MultiplayerGamestate gamestate;
+            if (Gamestates.TryGetValue(gameId, out gamestate))
+            {
+                if (gamestate.White == player)
+                {
+                    PlayersGamestates[player] = gameId;
+                    return "WHITE";
+                } else if (gamestate.Black == player)
+                {
+                    PlayersGamestates[player] = gameId;
+                    return "BLACK";
+                } else if (gamestate.White == String.Empty)
+                {
+                    gamestate.White = player;
+                    PlayersGamestates[player] = gameId;
+                    return "WHITE";
+                } else if (gamestate.Black == String.Empty)
+                {
+                    gamestate.Black = player;
+                    PlayersGamestates[player] = gameId;
+                    return "BLACK";
+                } else
+                {
+                    return "SPECTATE";
+                }
+            } 
+            else
+            {
+                return String.Empty;
+            }
+        }
 
         public MoveResponse Move(string src, string dst, String player)
         {
@@ -119,6 +186,10 @@ namespace ChessGameOnline.Services
                 var moveSrc = new Position(src[0], int.Parse(src[1].ToString()));
                 var moveDst = new Position(dst[0], int.Parse(dst[1].ToString()));
                 var result = gamestate.Move(moveSrc, moveDst);
+                if(result == MoveResult.CHECKMATE)
+                {
+                    RemoveGame(gameId);
+                }
                 if(result == MoveResult.MOVED)
                 {
                     if(currentPlayer == Color.WHITE && gamestate.WhiteRemainingTime > 0)
