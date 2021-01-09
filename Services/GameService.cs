@@ -7,6 +7,8 @@ using ChessGame;
 using ChessGameOnline.Controllers.Responses;
 using ChessGameOnline.Services.Responses;
 using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace ChessGameOnline.Services
 {
@@ -48,9 +50,9 @@ namespace ChessGameOnline.Services
             PlayerSearchingGame = new Dictionary<TimeControl, string>();
         }
 
-        public void RemoveGame(int gameId)
+        public async void RemoveGame(int gameId)
         {
-            Task.Delay(10000).Wait();
+            await Task.Delay(10000);
             Gamestates.Remove(gameId);
             var players = PlayersGamestates.Where((pair) => pair.Value == gameId);
             foreach(var player in players)
@@ -59,7 +61,7 @@ namespace ChessGameOnline.Services
                 var playerConnections = GameHub.UsersConnections[player.Key];
                 foreach(var connection in playerConnections)
                 {
-                    _hubContext.Groups.RemoveFromGroupAsync(connection, gameId.ToString());
+                    await _hubContext.Groups.RemoveFromGroupAsync(connection, gameId.ToString());
                 }
             }
         }
@@ -85,12 +87,38 @@ namespace ChessGameOnline.Services
             }
             gamestate.WhiteTimer.Elapsed += (sender, args) =>
             {
-                _hubContext.Clients.Group(gameId.ToString()).SendAsync("timerElapsed", "BLACK");
+                gamestate.GameOver = true;
+                gamestate.GameResult = GameResult.BLACK_WIN;
+                DefaultContractResolver contractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy()
+                };
+                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+                    ContractResolver = contractResolver,
+                    Formatting = Formatting.Indented
+                };
+                var response = new GamestateResponse(gamestate);
+                var json = JsonConvert.SerializeObject(response, settings);
+                _hubContext.Clients.Group(gameId.ToString()).SendAsync("updateGameState", json);
                 RemoveGame(gameId);
             };
             gamestate.BlackTimer.Elapsed += (sender, args) =>
             {
-                _hubContext.Clients.Group(gameId.ToString()).SendAsync("timerElapsed", "WHITE");
+                gamestate.GameOver = true;
+                gamestate.GameResult = GameResult.WHITE_WIN;
+                DefaultContractResolver contractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy()
+                };
+                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+                    ContractResolver = contractResolver,
+                    Formatting = Formatting.Indented
+                };
+                var response = new GamestateResponse(gamestate);
+                var json = JsonConvert.SerializeObject(response, settings);
+                _hubContext.Clients.Group(gameId.ToString()).SendAsync("updateGameState", json);
                 RemoveGame(gameId);
             };
             gamestate.DrawTimer.Elapsed += (arg, e) =>
@@ -186,8 +214,9 @@ namespace ChessGameOnline.Services
                 var moveSrc = new Position(src[0], int.Parse(src[1].ToString()));
                 var moveDst = new Position(dst[0], int.Parse(dst[1].ToString()));
                 var result = gamestate.Move(moveSrc, moveDst);
-                if(result == MoveResult.CHECKMATE)
+                if(result == MoveResult.GAME_OVER)
                 {
+                    
                     RemoveGame(gameId);
                 }
                 if(result == MoveResult.MOVED)
@@ -195,23 +224,16 @@ namespace ChessGameOnline.Services
                     if(currentPlayer == Color.WHITE && gamestate.WhiteRemainingTime > 0)
                     {
                         gamestate.WhiteTimer.Stop();
-                        gamestate.whiteStopwatch.Stop();
-                        gamestate.WhiteRemainingTime -= (int)gamestate.whiteStopwatch.ElapsedMilliseconds;
+                        gamestate.WhiteRemainingTime -= (int)gamestate.WhiteStopwatch.ElapsedMilliseconds;
                         gamestate.WhiteRemainingTime += gamestate.Increment;
-                        gamestate.whiteStopwatch.Reset();
 
-                        gamestate.blackStopwatch.Start();
                         gamestate.BlackTimer.Interval = gamestate.BlackRemainingTime;
                         gamestate.BlackTimer.Start();
                     } else if (currentPlayer == Color.BLACK && gamestate.BlackRemainingTime > 0)
                     {
                         gamestate.BlackTimer.Stop();
-                        gamestate.blackStopwatch.Stop();
-                        gamestate.BlackRemainingTime -= (int)gamestate.blackStopwatch.ElapsedMilliseconds;
+                        gamestate.BlackRemainingTime -= (int)gamestate.BlackStopwatch.ElapsedMilliseconds;
                         gamestate.BlackRemainingTime += gamestate.Increment;
-                        gamestate.blackStopwatch.Reset();
-
-                        gamestate.whiteStopwatch.Start();
                         
                         gamestate.WhiteTimer.Interval = gamestate.WhiteRemainingTime;
                         gamestate.WhiteTimer.Start();
@@ -248,7 +270,7 @@ namespace ChessGameOnline.Services
                 return null;
         }
 
-        public MoveResponse Promote(String player, string pieceType)
+        public MoveResponse Promote(String player, PieceType pieceType)
         {
             MultiplayerGamestate gamestate;
             int gameId;
@@ -259,26 +281,7 @@ namespace ChessGameOnline.Services
             if ((gamestate.White == player && gamestate.ToMove == Color.WHITE) ||
                 (gamestate.Black == player && gamestate.ToMove == Color.BLACK))
             {
-                PieceType type;
-                switch (pieceType)
-                {
-                    case "Queen":
-                        type = PieceType.QUEEN;
-                        break;
-                    case "Rook":
-                        type = PieceType.ROOK;
-                        break;
-                    case "Knight":
-                        type = PieceType.KNIGHT;
-                        break;
-                    case "Bishop":
-                        type = PieceType.BISHOP;
-                        break;
-                    default:
-                        type = PieceType.QUEEN;
-                        break;
-                }
-                var result = gamestate.Promote(type);
+                var result = gamestate.Promote(pieceType);
                 return new MoveResponse(result, gamestate);
             }
 

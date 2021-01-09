@@ -27,9 +27,9 @@ namespace ChessGameOnline.Controllers.Responses
     public class GamestateResponse
     {
      
-        public PieceResponse[,] Board { get; set; }
+        public Piece[,] Board { get; set; }
     
-        public string ToMove { get; set; }
+        public Color ToMove { get; set; }
    
         public int TurnCount {get;set;}
   
@@ -37,20 +37,19 @@ namespace ChessGameOnline.Controllers.Responses
         
         public int WhiteTime { get; set; }
         public int BlackTime { get; set; }
+        public (Position, Position) LastMove { get; set; }
+        public string GameResult { get; set; }
 
         public GamestateResponse(MultiplayerGamestate gamestate)
         {
-            Board = new PieceResponse[8, 8];
-            for (int i = 0; i < 8; i++)
-                for (int j = 0; j < 8; j++)
-                    if(gamestate.Board[i, j] != null)
-                        Board[i, j] = new PieceResponse(gamestate.Board[i, j]);
-
-            ToMove = gamestate.ToMove.ToString();
+            Board = gamestate.Board;
+            ToMove = gamestate.ToMove;
             TurnCount = gamestate.TurnCount;
             GameOver = gamestate.GameOver;
             WhiteTime = gamestate.WhiteRemainingTime;
             BlackTime = gamestate.BlackRemainingTime;
+            LastMove = gamestate.LastMove;
+            GameResult = gamestate.GameResult.ToString();
         }
     }
 }
