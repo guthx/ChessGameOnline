@@ -3,8 +3,6 @@
     body {
         padding-top: 50px;
     }
-
-    
 }
 
 html {
@@ -13,22 +11,22 @@ html {
 
 .black-square {
     background-color: rebeccapurple;
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    height: 100%;
     color: aliceblue;
 }
 
 .white-square {
     background-color: aliceblue;
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    height: 100%;
     color: rebeccapurple;
 }
 
 .highlighted-square {
     background-color: cornflowerblue;
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    height: 100%;
 }
 
 .winner {
@@ -37,16 +35,21 @@ html {
 }
 
 .board {
-    max-width: 480px;
     grid-column: 3;
     font-size: 13px;
     font-weight: bold;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    height: 80vh;
+    width: 80vh;
 }
 
 .board-container {
-    display:grid;
-    padding-top: 50px;
-    grid-template-columns: auto 235px 480px max-content auto;
+    display: grid;
+    padding-top: 10vh;
+    padding-bottom: 10vh;
+    grid-template-columns: 1fr 1fr min-content 1fr 1fr;
     grid-column-gap: 10px;
 }
 
@@ -58,6 +61,7 @@ html {
     font-size: 32px;
     font-weight: bold;
     padding: 5px;
+    display: inline-table;
 }
 
 .highlighted {
@@ -69,6 +73,8 @@ html {
     justify-content: space-between;
     flex-direction: column;
     grid-column: 4;
+    align-content: start;
+    align-items: flex-start;
 }
 
 #searching {
@@ -77,19 +83,22 @@ html {
     align-items: center;
     font-size: 24px;
 }
+
 #spinner {
     padding-top: 6px;
 }
 
-#draw {
+#buttons {
     grid-column: 2;
     display: grid;
-    grid-template-rows: 220px 40px 30px auto;
-    grid-template-columns: 235px;
+    grid-template-rows: 1fr 70px 70px 40px 1fr;
+    grid-template-columns: 80px;
+    justify-content: right;
+    grid-row-gap: 15px;
 }
 
 #draw-response {
-    grid-row: 3;
+    grid-row: 2;
     display: grid;
     grid-template-columns: auto auto;
     grid-column-gap: 8px;
@@ -97,17 +106,149 @@ html {
 
 .square-label-file {
     position: absolute;
-    margin-left: 3px;
-    margin-top: 40px;
+    margin-left: 2px;
+    margin-top: calc(80vh/8 - 19px);
     opacity: 0.85;
 }
 
 .square-label-rank {
     position: absolute;
-    margin-left: 50px;
+    margin-left: calc(80vh/8 - 8px);
     opacity: 0.85;
 }
 
 .square-label-double {
     position: absolute;
+}
+
+.dragged-over {
+    background-color: cornflowerblue;
+    opacity: 0.7;
+}
+
+.dot {
+    height: 4vh;
+    width: 4vh;
+    background-color: cornflowerblue;
+    border-radius: 50%;
+    display: inline-block;
+    opacity: 0.7;
+    position: absolute;
+    margin-top: 3vh;
+    margin-left: 3vh;
+    pointer-events: none;
+}
+
+img {
+    pointer-events: none;
+}
+
+
+.black-square.moved {
+    background-color: darkgoldenrod;
+}
+
+.white-square.moved {
+    background-color: darkkhaki;
+}
+
+.draw-button {
+    grid-row: 1;
+    background-color: darkorchid;
+}
+
+#draw {
+    grid-row: 3;
+    display: grid;
+    grid-template-rows: 40px 30px;
+    grid-row-gap: 3px;
+    justify-items: center;
+}
+
+.resign-button {
+    grid-row: 4;
+    background-color: orangered;
+    justify-self: center;
+}
+
+#takeback {
+    grid-row: 2;
+    display: grid;
+    grid-template-rows: 40px 30px;
+    justify-items: center;
+}
+
+.game-button {
+    border: none;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 5px;
+    color: #fff;
+    box-shadow: 0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12);
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 8px;
+    margin: 0;
+    position: relative;
+}
+
+.takeback-button {
+    background-color: #3f51b5;
+}
+
+.accept-button {
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    background-color: forestgreen;
+}
+
+.decline-button {
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    background-color: red;
+}
+
+.pending {
+    background-color: gray;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 4px 12px;
+    border-radius: 6px;
+    position: absolute;
+    right: 115%;
+    z-index: 1;
+    font-size: 14px;
+}
+
+.tooltip-text::after {
+    content: " ";
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent black;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.takeback-button:hover .tooltip-text {
+    visibility: visible;
+}
+
+.resign-button:hover .tooltip-text {
+    visibility: visible;
+}
+
+.draw-button:hover .tooltip-text {
+    visibility: visible;
 }

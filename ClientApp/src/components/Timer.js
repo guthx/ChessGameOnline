@@ -27,7 +27,7 @@ function Timer(props) {
     })
     useEffect(() => {
         setTime(props.time);
-    }, [props.time])
+    }, [props.time, props.highlight])
 
     if (props.highlight == true)
         return (
