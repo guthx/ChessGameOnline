@@ -9,6 +9,7 @@ using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Timers;
+using ChessGame;
 
 namespace ChessGameOnline.Services
 {
@@ -17,7 +18,15 @@ namespace ChessGameOnline.Services
     {
         private static GameService _gameService;
         public static Dictionary<string, List<string>> UsersConnections = new Dictionary<string, List<string>>();
-
+        private static DefaultContractResolver contractResolver = new DefaultContractResolver
+        {
+            NamingStrategy = new CamelCaseNamingStrategy()
+        };
+        private static JsonSerializerSettings settings = new JsonSerializerSettings
+        {
+            ContractResolver = contractResolver,
+            Formatting = Formatting.Indented
+        };
         public GameHub(GameService gameService) : base()
         {
             _gameService = gameService;
@@ -76,62 +85,39 @@ namespace ChessGameOnline.Services
             int gameId = _gameService.PlayersGamestates[Context.UserIdentifier];
             var gamestate = _gameService.Gamestates[gameId];
             var response = new GamestateResponse(gamestate);
-            var contractResolver = new DefaultContractResolver
-            {
-                NamingStrategy = new CamelCaseNamingStrategy()
-            };
-            
-            var json = JsonConvert.SerializeObject(response, new JsonSerializerSettings
-            {
-                ContractResolver = contractResolver,
-                Formatting = Formatting.Indented
-            });
+            var json = JsonConvert.SerializeObject(response, settings);
             await Clients.Caller.SendAsync("updateGameState", json);
         }
+
 
         public async Task Move(string src, string dst)
         {
             var result = _gameService.Move(src, dst, Context.UserIdentifier);
             if(result != null)
             {
-                if (result.MoveResult == "MOVED" || result.MoveResult == "CHECKMATE")
+                if (result.MoveResult == "MOVED" || result.MoveResult == "GAME_OVER")
                 {
-                    var contractResolver = new DefaultContractResolver
-                    {
-                        NamingStrategy = new CamelCaseNamingStrategy()
-                    };
-
-                    var json = JsonConvert.SerializeObject(result.Gamestate, new JsonSerializerSettings
-                    {
-                        ContractResolver = contractResolver,
-                        Formatting = Formatting.Indented
-                    });
+                    var json = JsonConvert.SerializeObject(result.Gamestate, settings);
 
                     await Clients.Group(_gameService.PlayersGamestates[Context.UserIdentifier].ToString()).SendAsync("updateGameState", json);
+                    await Clients.Group(_gameService.PlayersGamestates[Context.UserIdentifier].ToString() + "_spectate").SendAsync("updateGameState", json);
                 } else if (result.MoveResult == "AWAITING_PROMOTION")
                 {
                     await Clients.Caller.SendAsync("awaitingPromotion", dst);
                 }
+                _gameService.Gamestates[_gameService.PlayersGamestates[Context.UserIdentifier]].TurnBackRequest = -1;
+                await Clients.OthersInGroup(_gameService.PlayersGamestates[Context.UserIdentifier].ToString()).SendAsync("takebackRejected");
             }
         }
 
-        public async Task Promote(string type)
+        public async Task Promote(PieceType type)
         {
             var result = _gameService.Promote(Context.UserIdentifier, type);
             if(result != null)
             {
-                if (result.MoveResult == "MOVED" || result.MoveResult == "CHECKMATE")
+                if (result.MoveResult == "MOVED" || result.MoveResult == "GAME_OVER")
                 {
-                    var contractResolver = new DefaultContractResolver
-                    {
-                        NamingStrategy = new CamelCaseNamingStrategy()
-                    };
-
-                    var json = JsonConvert.SerializeObject(result.Gamestate, new JsonSerializerSettings
-                    {
-                        ContractResolver = contractResolver,
-                        Formatting = Formatting.Indented
-                    });
+                    var json = JsonConvert.SerializeObject(result.Gamestate, settings);
 
                     await Clients.Group(_gameService.PlayersGamestates[Context.UserIdentifier].ToString()).SendAsync("updateGameState", json);
                 }
@@ -211,6 +197,11 @@ namespace ChessGameOnline.Services
                     } else
                     {
                         await Clients.Group(gameId.ToString()).SendAsync("drawAccepted");
+                        gamestate.GameOver = true;
+                        gamestate.GameResult = GameResult.DRAW;
+                        var response2 = new GamestateResponse(gamestate);
+                        var json = JsonConvert.SerializeObject(response2, settings);
+                        await Clients.Group(gameId.ToString()).SendAsync("updateGameState", json);
                         _gameService.RemoveGame(gameId);
                     }
                 }
@@ -227,15 +218,85 @@ namespace ChessGameOnline.Services
                 {
                     gamestate.BlackTimer.Stop();
                     gamestate.WhiteTimer.Stop();
+                    gamestate.GameOver = true;
+                    gamestate.GameResult = GameResult.BLACK_WIN;
                     _gameService.RemoveGame(gameId);
-                    await Clients.Group(gameId.ToString()).SendAsync("gameResigned", "BLACK");
+                    var response = new GamestateResponse(gamestate);
+                    var json = JsonConvert.SerializeObject(response, settings);
+                    await Clients.Group(gameId.ToString()).SendAsync("updateGameState", json);
                 }
                 else if (gamestate.Black == Context.UserIdentifier)
                 {
                     gamestate.BlackTimer.Stop();
                     gamestate.WhiteTimer.Stop();
+                    gamestate.GameOver = true;
+                    gamestate.GameResult = GameResult.WHITE_WIN;
                     _gameService.RemoveGame(gameId);
-                    await Clients.Group(gameId.ToString()).SendAsync("gameResigned", "WHITE");
+                    var response = new GamestateResponse(gamestate);
+                    var json = JsonConvert.SerializeObject(response, settings);
+                    await Clients.Group(gameId.ToString()).SendAsync("updateGameState", json);
+                }
+            }
+        }
+
+        public async Task RequestTakeback()
+        {
+            int gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                var gamestate = _gameService.Gamestates[gameId];
+                if (gamestate.White == Context.UserIdentifier && gamestate.ToMove == Color.BLACK)
+                {
+                    gamestate.TurnBackRequest = gamestate.TurnCount * 2 - 2;
+                    await Clients.OthersInGroup(gameId.ToString()).SendAsync("takebackRequested");
+                }
+                else if (gamestate.Black == Context.UserIdentifier && gamestate.ToMove == Color.WHITE)
+                {
+                    gamestate.TurnBackRequest = gamestate.TurnCount * 2 - 3;
+                    await Clients.OthersInGroup(gameId.ToString()).SendAsync("takebackRequested");
+                }
+            }
+        }
+
+        public async Task RespondTakeback(bool response)
+        {
+            int gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                var gamestate = _gameService.Gamestates[gameId];
+                if (response)
+                {
+                    if (gamestate.White == Context.UserIdentifier &&
+                        gamestate.ToMove == Color.WHITE &&
+                        gamestate.TurnBackRequest >= 0 &&
+                        gamestate.TurnBackRequest % 2 == 1)
+                    {
+                        gamestate = new MultiplayerGamestate(gamestate.PositionHistory[gamestate.TurnBackRequest], gamestate);
+                        gamestate.BlackTimer.Interval = gamestate.BlackRemainingTime;
+                        gamestate.BlackStopwatch.Restart();
+                        gamestate.BlackTimer.Start();
+                        _gameService.Gamestates[gameId] = gamestate;
+                        var response2 = new GamestateResponse(gamestate);
+                        var json = JsonConvert.SerializeObject(response2, settings);
+                        await Clients.Group(gameId.ToString()).SendAsync("updateGameState", json);
+                    }
+                    else if (gamestate.Black == Context.UserIdentifier &&
+                        gamestate.ToMove == Color.BLACK &&
+                        gamestate.TurnBackRequest >= 0 &&
+                        gamestate.TurnBackRequest % 2 == 0)
+                    {
+                        gamestate = new MultiplayerGamestate(gamestate.PositionHistory[gamestate.TurnBackRequest], gamestate);
+                        gamestate.WhiteStopwatch.Restart();
+                        gamestate.WhiteTimer.Start();
+                        _gameService.Gamestates[gameId] = gamestate;
+                        var response2 = new GamestateResponse(gamestate);
+                        var json = JsonConvert.SerializeObject(response2, settings);
+                        await Clients.Group(gameId.ToString()).SendAsync("updateGameState", json);
+                    }
+                }
+                else
+                {
+                    await Clients.OthersInGroup(gameId.ToString()).SendAsync("takebackRejected");
                 }
             }
         }
