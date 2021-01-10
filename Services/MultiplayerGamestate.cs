@@ -21,6 +21,7 @@ namespace ChessGameOnline.Services
         public string DrawProposed;
         public Timer DrawTimer;
         public int TurnBackRequest;
+        public bool Rematch;
 
         public MultiplayerGamestate(string white, string black, int increment, int time) : base()
         {
@@ -38,6 +39,7 @@ namespace ChessGameOnline.Services
             WhiteTimer.AutoReset = false;
             BlackTimer.AutoReset = false;
             DrawTimer.AutoReset = false;
+            Rematch = false;
         }
 
         public MultiplayerGamestate(string fen, MultiplayerGamestate gamestate) : base(fen, gamestate)

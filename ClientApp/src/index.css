@@ -216,6 +216,22 @@ img {
     background-color: gray;
 }
 
+#rematch {
+    display: grid;
+    grid-template-rows: min-content min-content;
+    font-size: 18px;
+    justify-content: center;
+    padding-bottom: 12px;
+    grid-row-gap: 2px;
+}
+
+#rematch-buttons {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    grid-column-gap: 10px;
+    justify-content: center;
+}
+
 .tooltip-text {
     visibility: hidden;
     background-color: black;

@@ -29,6 +29,12 @@ import CloseIcon from '@material-ui/icons/Close';
 
 import { PieceType, Color, drawStates } from '../enums';
 
+const rematchStates = {
+    NEUTRAL: 1,
+    AWAITING: 2,
+    ACCEPTED: 3,
+    REJECTED: 4
+};
 
 export function Game(props) {
     const [sessionId, setSessionId] = useState(Cookies.get('sessionId'));
@@ -53,66 +59,16 @@ export function Game(props) {
     const gameStateRef = useRef();
     gameStateRef.current = gameState;
     const updateState = newState => setGameState(Object.assign({}, gameStateRef.current, newState));
-  //  const [toMove, setToMove] = useState(false);
-   // const [color, setColor] = useState(Color.SPECTATE);
+
     const colorRef = useRef();
     colorRef.current = gameState.color;
-    const [selectedPiece, setSelectedPiece] = useState({
-        validMoves: [],
-        id: ""
-    });
-  //  const [awaitingPromotion, setAwaitingPromotion] = useState(null);
-  //  const [checkmate, setCheckmate] = useState(false);
-  //  const [winner, setWinner] = useState(null);
+    const [rematchState, setRematchState] = useState(rematchStates.NEUTRAL);
+
     const [drawState, setDrawState] = useState(drawStates.NEUTRAL);
     const [playMoveSound] = useSound(moveSound);
     const play = useRef();
     play.current = playMoveSound;
-    /*
-    useEffect(() => {
-        if (sessionId == null) {
-            fetch("/api/SampleData/guid")
-                .then(res => res.text())
-                .then((result) => {
-                    setSessionId(result);
-                    Cookies.set('sessionId', result, { sameSite: 'strict' });
-                });
-        }
-    }, [sessionId]);
-
-    useEffect(() => {
-        var data = { userId: sessionId, gameId: gameId };
-        fetch("api/Game/joingame", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(res => res.json())
-            .then(response => {
-                setGameState(response.gamestate);
-                setColor(response.color);
-                if (response.gamestate.toMove == response.color)
-                    setToMove(true);
-                else
-                    setToMove(false);
-            });
-    }, [gameId, sessionId]);
-
-    useEffect(() => {
-        if (toMove == false) {
-            fetch("api/Game/game?userId=" + sessionId)
-                .then(res => res.json())
-                .then(response => {
-                    setGameState(response);
-                    setToMove(true);
-                    setCheckmate(response.gameOver);
-                });
-        }
-    }, [toMove]);
-
-    */
+   
     useEffect(() => {
         if (gameState.awaitingPromotion != null) {
             var file = gameState.awaitingPromotion[0].charCodeAt() - 'A'.charCodeAt();
@@ -180,11 +136,28 @@ export function Game(props) {
         props.hubConnection.invoke('RespondTakeback', response)
     }
 
+    const joinGame = () => {
+        props.hubConnection.invoke('JoinGame', parseInt(gameId))
+            .then(color => {
+                if (color == "WHITE")
+                    updateState({
+                        color: Color.WHITE
+                    });
+                else if (color == "BLACK")
+                    updateState({
+                        color: Color.BLACK
+                    });
+                else
+                    updateState({
+                        color: Color.SPECTATE
+                    });
+                props.hubConnection.invoke("Update");
+            });
+    }
+
     useEffect(() => {
         props.hubConnection.off('opponentReady');
-        props.hubConnection.on('updateGameState', gamestateJson => {
-          
-            let gamestate = JSON.parse(gamestateJson);
+        props.hubConnection.on('updateGameState', gamestate => {
             let toMove;
             let takeback;
             if (gamestate.toMove == colorRef.current) {
@@ -243,23 +216,18 @@ export function Game(props) {
         props.hubConnection.on('takebackRejected', () => {
             updateState({ takebackState: drawStates.WAITING });
         });
+        props.hubConnection.on('rematchAccepted', () => {
+            setRematchState(rematchStates.ACCEPTED);
+        });
+        props.hubConnection.on('rematchDeclined', () => {
+            setRematchState(rematchStates.REJECTED);
+        });
+        props.hubConnection.on('rematch', () => {
+            joinGame();
+        });
+        joinGame();
         let id = gameId;
-        props.hubConnection.invoke('JoinGame', parseInt(id))
-            .then(color => {
-                if (color == "WHITE")
-                    updateState({
-                        color: Color.WHITE
-                    });
-                else if (color == "BLACK")
-                    updateState({
-                        color: Color.BLACK
-                    });
-                else
-                    updateState({
-                        color: Color.SPECTATE
-                    });
-                props.hubConnection.invoke("Update");
-            });
+        
 
     }, [gameId]);
 
@@ -682,6 +650,15 @@ export function Game(props) {
         props.hubConnection.invoke('RespondDraw', response);
     };
 
+    const respondRematch = (response) => {
+        props.hubConnection.invoke('RespondRematch', response);
+        if (response == true) {
+            setRematchState(rematchStates.AWAITING);
+        } else {
+            updateState({ checkmate: false });
+        }
+    }
+
     const resign = () => {
         props.hubConnection.invoke('Resign');
     }
@@ -749,6 +726,7 @@ export function Game(props) {
 
     const EndGame = (props) => {
         let message;
+        let rematchComponent;
         switch (gameState.gamestate.gameResult) {
             case "WHITE_WIN":
                 message = "White wins";
@@ -763,20 +741,91 @@ export function Game(props) {
                 message = "Stalemate";
                 break;
         }
+        switch (rematchState) {
+            case rematchStates.NEUTRAL:
+                rematchComponent = (
+                    <div id={'rematch'}>
+                        <div id={'rematch-text'}>
+                            Rematch?
+                        </div>
+                        <div id={'rematch-buttons'}>
+                            <button
+                                class={'game-button accept-button'}
+                                onClick={() => respondRematch(true)}>
+                                <CheckIcon />
+                            </button>
+                            <button
+                                class={'game-button decline-button'}
+                                onClick={() => respondRematch(false)}>
+                                <CloseIcon />
+                            </button>
+                        </div>
+                    </div>
+                );
+                break;
+            case rematchStates.AWAITING:
+                rematchComponent = (
+                    <div id={'rematch'}>
+                        <div id={'rematch-text'}>
+                            Awaiting opponent...
+                        </div>
+                        <div id={'rematch-buttons'}>
+                            <button
+                                class={'game-button accept-button pending'}
+                                disabled={true}>
+                                <CheckIcon />
+                            </button>
+                            <button
+                                class={'game-button decline-button'}
+                                onClick={() => respondRematch(false)}>
+                                <CloseIcon />
+                            </button>
+                        </div>
+                    </div>
+                );
+                break;
+            case rematchStates.ACCEPTED:
+                rematchComponent = (
+                    <div id={'rematch'}>
+                        <div id={'rematch-text'}>
+                            Opponent proposed rematch
+                        </div>
+                        <div id={'rematch-buttons'}>
+                            <button
+                                class={'game-button accept-button'}
+                                onClick={() => respondRematch(true)}>
+                                <CheckIcon />
+                            </button>
+                            <button
+                                class={'game-button decline-button'}
+                                onClick={() => respondRematch(false)}>
+                                <CloseIcon />
+                            </button>
+                        </div>
+                    </div>
+                );
+                break;
+            case rematchStates.REJECTED:
+                rematchComponent = (
+                    <div id={'rematch'}>
+                        <div id={'rematch-text'}>
+                            Opponent declined rematch
+                        </div>
+                    </div>
+                );
+                break;
+        }
         return (
             <Dialog open={gameState.checkmate} fullWidth={true} maxWidth={'xs'}>
                 <DialogTitle id="dialog-title">Game over</DialogTitle>
                 <div class="winner">
                     {message}
                 </div>
-                <Button variant="contained" size="large" color="primary" className={classes.button} onClick={() => Rematch()}>Play again</Button>
+                {rematchComponent}
             </Dialog>
         );
     }
 
-    const Rematch = () => {
-        window.location.reload(false);
-    };
 
     const Draw = () => {
         var component;

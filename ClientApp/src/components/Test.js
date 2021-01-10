@@ -13,60 +13,6 @@ export function Test(props) {
     const [gameId, setGameId] = useState(0);
     const [awaiting, setAwaiting] = useState(false);
     const [searching, setSearching] = useState(false);
-    /*
-    useEffect(() => {
-        var cookieId = Cookies.get('sessionId');
-        if (cookieId != undefined)
-            setSessionId(cookieId);
-        else if (sessionId == "") {
-            fetch("/api/SampleData/guid")
-                .then(res => res.text())
-                .then((result) => {
-                    console.log(result);
-                    setSessionId(result);
-                    Cookies.set('sessionId', result, { sameSite: 'strict' });
-                });
-        }
-    });
-    
-    useEffect(() => {
-        if (gameId != 0) {
-            fetch("/api/Game/game?userId=" + sessionId)
-                .then(res => res.json())
-                .then((result) => {
-                    console.log(result);
-                });
-        }
-    }, [gameId]);
-    
-    var createGame = () => {
-        var data = { sessionId };
-        console.log(data);
-        console.log(JSON.stringify(data));
-        fetch("/api/Game/newgame", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(sessionId)
-        })
-            .then(res => res.json())
-            .then(gameId => {
-                setAwaiting(true);
-                setGameId(gameId);
-                awaitOpponent(gameId);
-                //history.push('/game/' + gameId);
-            });
-    };
-
-    const awaitOpponent = (id) => {
-        fetch("api/Game/game?userId=" + sessionId)
-            .then(res => res.json())
-            .then(response => {
-                history.push('/game/' + id);
-            });
-    }
-    */
 
     const createGame = () => {
         props.hubConnection.invoke("CreateGame", 3000000, 2000)
@@ -127,7 +73,7 @@ export function Test(props) {
     }));
 
     const classes = useStyles();
-    console.log(props);
+    console.log(props.history);
     return (
         <Container fluid height={'100%'}>
             <Col sm={3}></Col>

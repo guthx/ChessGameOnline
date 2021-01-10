@@ -6,7 +6,7 @@ import { Counter } from './components/Counter';
 import { Test } from './components/Test';
 import { Game } from './components/Game';
 import { SocketTest } from './components/SocketTest';
-import { Switch, BrowserRouter, Route } from 'react-router-dom';
+import { Switch, BrowserRouter, Route, useHistory } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import Cookies from 'js-cookie';
 
@@ -17,9 +17,8 @@ export default function App()  {
     const [hubConnection, setHubConnection] = useState(null);
     const [token, setToken] = useState(Cookies.get('token'));
     const [connected, setConnected] = useState(false);
-
+    const history = useHistory();
     useEffect(() => {
-        
         if (token != undefined) {
             var hub = new signalR.HubConnectionBuilder()
                 .withUrl("/hubs/game", {
@@ -31,13 +30,16 @@ export default function App()  {
                 })
                 .configureLogging(signalR.LogLevel.Information)
                 .build();
-
+            hub.on('reconnect', gameId => {
+                history.push('/game/' + gameId);
+            });
             hub.start()
                 .then(() => {
                     setHubConnection(hub);
                     setConnected(true);
                 })
                 .catch(log => console.log(log));
+            
             setHubConnection(hub);
         }
         
