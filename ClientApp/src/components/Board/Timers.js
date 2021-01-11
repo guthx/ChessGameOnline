@@ -1,6 +1,6 @@
 ﻿import React from 'react';
-import Timer from '../components/Timer';
-import { Color } from '../enums';
+import Timer from './Timer';
+import { Color } from '../../enums';
 
 function Timers(props) {
     if (props.turnCount <= 0) {

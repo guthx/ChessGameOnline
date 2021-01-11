@@ -1,26 +1,95 @@
-import React, { Component } from 'react';
+﻿import React, { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
+import { withRouter } from 'react-router-dom';
+import { Col, Grid, Row } from 'react-bootstrap';
+import { Container, Button } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 
-export class Home extends Component {
-  displayName = Home.name
 
-  render() {
+export function Home(props) {
+    
+    const [sessionId, setSessionId] = useState("");
+    const [gameId, setGameId] = useState(0);
+    const [awaiting, setAwaiting] = useState(false);
+    const [searching, setSearching] = useState(false);
+
+    const createGame = () => {
+        props.hubConnection.invoke("CreateGame", 3000000, 2000)
+            .then(id => {
+                props.hubConnection.on("opponentReady", () => {
+                    console.log('/game/' + id);
+                    props.history.push('/game/' + id);
+                });
+                setGameId(id);
+                setAwaiting(true);
+            });
+        
+    }
+
+    const searchGame = () => {
+        props.hubConnection.invoke("SearchGame", 60000000, 2000)
+        setSearching(true);
+        props.hubConnection.on('gameFound', id => {
+            props.history.push('/game/' + id);
+            props.hubConnection.off('gameFound');
+        });
+    }
+
+    const AwaitingOpponent = () => {
+        if (awaiting == true)
+            return (
+                <div>
+                    <div>
+                        Send this link to your opponent:
+                    <input disabled={true} value={window.location.host + '/game/' +  gameId }/>
+                    </div>
+                    <div className={'awaiting'}>
+                        Awaiting opponent...
+                </div>
+                </div>
+            );
+        else
+            return null;
+    }
+
+    const SearchingOpponent = () => {
+        if (searching == true) {
+            return (
+                <div id={'searching'}>
+                    Searching for an opponent...
+                    <div id={'spinner'}>
+                        <img src={require('../images/spinner.gif')} />
+                    </div>
+                </div>
+            );
+        } else return null;
+    }
+
+    const useStyles = makeStyles((theme) => ({
+        button: {
+            marginTop: "20px"
+        }
+    }));
+
+    const classes = useStyles();
+    console.log(props.history);
     return (
-      <div>
-        <h1>Hello, world!</h1>
-        <p>Welcome to your new single-page application, built with:</p>
-        <ul>
-          <li><a href='https://get.asp.net/'>ASP.NET Core</a> and <a href='https://msdn.microsoft.com/en-us/library/67ef8sbd.aspx'>C#</a> for cross-platform server-side code</li>
-          <li><a href='https://facebook.github.io/react/'>React</a> for client-side code</li>
-          <li><a href='http://getbootstrap.com/'>Bootstrap</a> for layout and styling</li>
-        </ul>
-        <p>To help you get started, we've also set up:</p>
-        <ul>
-          <li><strong>Client-side navigation</strong>. For example, click <em>Counter</em> then <em>Back</em> to return here.</li>
-          <li><strong>Development server integration</strong>. In development mode, the development server from <code>create-react-app</code> runs in the background automatically, so your client-side resources are dynamically built on demand and the page refreshes when you modify any file.</li>
-          <li><strong>Efficient production builds</strong>. In production mode, development-time features are disabled, and your <code>dotnet publish</code> configuration produces minified, efficiently bundled JavaScript files.</li>
-        </ul>
-        <p>The <code>ClientApp</code> subdirectory is a standard React application based on the <code>create-react-app</code> template. If you open a command prompt in that directory, you can run <code>npm</code> commands such as <code>npm test</code> or <code>npm install</code>.</p>
-      </div>
+        <Container fluid height={'100%'}>
+            <Col sm={3}></Col>
+                <Col sm={6}>
+                <Row className={'h-50'}>
+                    <img src={require('../images/horse.jpg')}></img>
+                </Row>
+                <Row className={'h-25'}>
+                    <Button variant="contained" size="large" color="primary" className={classes.button} onClick={createGame} >Create custom game</Button>
+                    <Button variant="contained" size="large" color="primary" className={classes.button} onClick={searchGame} >Search an opponent</Button>
+                </Row>
+                <Row className={'h-25'}>
+                    <SearchingOpponent />
+                    <AwaitingOpponent />
+                </Row>
+                </Col>
+            <Col sm={3}></Col>
+        </Container>
     );
-  }
 }

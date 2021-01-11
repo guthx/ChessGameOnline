@@ -19,3 +19,10 @@ export const drawStates = {
     PROPOSED: 3,
     REJECTED: 4
 }
+
+export const rematchStates = {
+    NEUTRAL: 1,
+    AWAITING: 2,
+    ACCEPTED: 3,
+    REJECTED: 4
+};

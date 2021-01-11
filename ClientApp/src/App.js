@@ -1,11 +1,6 @@
 import React, { Component, useEffect, useState } from 'react';
-import { Layout } from './components/Layout';
 import { Home } from './components/Home';
-import { FetchData } from './components/FetchData';
-import { Counter } from './components/Counter';
-import { Test } from './components/Test';
 import { Game } from './components/Game';
-import { SocketTest } from './components/SocketTest';
 import { Switch, BrowserRouter, Route, useHistory } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import Cookies from 'js-cookie';
@@ -70,7 +65,7 @@ export default function App()  {
             <Route
                 exact path='/'
                 render={(props) => (
-                    <Test {...props} hubConnection={hubConnection} />
+                    <Home {...props} hubConnection={hubConnection} />
                 )}
             />
             <Route
