@@ -22,25 +22,23 @@
 
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
-    <Compile Remove="ClientApp\src\NewFolder\**" />
     <Content Remove="$(SpaRoot)**" />
-    <Content Remove="ClientApp\src\NewFolder\**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Remove="ClientApp\src\NewFolder\**" />
-    <None Remove="ClientApp\src\NewFolder\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="ClientApp\src\components\Board\Labels.cs" />
+    <Compile Remove="ClientApp\src\components\RightMenu.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="ChessGame">
       <HintPath>..\ChessGame\bin\Release\net472\ChessGame.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\Responses\" />
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

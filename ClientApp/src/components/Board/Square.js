@@ -11,7 +11,7 @@ function Square(props) {
     }, [props])
 
     const mouseEnter = () => {
-        if (state.highlighted == true) {
+        if (state.highlighted === true) {
             setState({
                 ...state,
                 selected: true
@@ -19,7 +19,7 @@ function Square(props) {
         }      
     }
     const mouseLeave = () => {
-        if (state.selected == true) {
+        if (state.selected === true) {
             setState({
                 ...state,
                 selected: false
@@ -27,14 +27,16 @@ function Square(props) {
         }
     }
 
-    if (state.promotion == false) {
+    if (state.promotion === false) {
         let squareClass = state.backgroundClass;
         if (state.moved)
             squareClass += ' moved';
         if (state.selected)
             squareClass += ' dragged-over';
+        if (state.checked)
+            squareClass += ' checked';
         let highlight = null;
-        if (state.highlighted == true) {
+        if (state.highlighted === true) {
             highlight = (<span className={'dot'}></span>);
         }
 
@@ -91,17 +93,21 @@ function typeOfPiece(symbol) {
             return PieceType.BISHOP;
         case 'r':
             return PieceType.ROOK;
+        default:
+            return PieceType.QUEEN;
     }
 }
 
-export default React.memo(Square, (prevProps, nextProps) => {
-    return
-        prevProps.state.symbol == nextProps.state.symbol &&
-        prevProps.state.promotion == nextProps.state.promotion &&
-        prevProps.state.moved == nextProps.state.moved &&
-        prevProps.state.highlighted == nextProps.state.highlighted &&
-        prevProps.state.selected == nextProps.state.selected;
+export default React.memo(Square)
+
+    /*, (prevProps, nextProps) => {
+    return prevProps.state.symbol === nextProps.state.symbol &&
+        prevProps.state.promotion === nextProps.state.promotion &&
+        prevProps.state.moved === nextProps.state.moved &&
+        prevProps.state.highlighted === nextProps.state.highlighted &&
+        prevProps.state.selected === nextProps.state.selected;
+        
 });
 
-
+*/
 

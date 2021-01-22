@@ -8,25 +8,25 @@ function Label({ color, f, r }) {
     if (color == Color.WHITE || color == Color.SPECTATE) {
         if (f == 7 && r == 0)
             label = (
-                <div class={'square-label-double'}>
-                    <div class={'square-label-file'}>
+                <div className={'square-label-double'}>
+                    <div className={'square-label-file'}>
                         {file.toLowerCase()}
                     </div>
-                    <div class={'square-label-rank'}>
+                    <div className={'square-label-rank'}>
                         {rank}
                     </div>
                 </div>
             );
         else if (f == 7) {
             label = (
-                <div class={'square-label-rank'}>
+                <div className={'square-label-rank'}>
                     {rank}
                 </div>
             );
         }
         else if (r == 0) {
             label = (
-                <div class={'square-label-file'}>
+                <div className={'square-label-file'}>
                     {file.toLowerCase()}
                 </div>
             );
@@ -34,25 +34,25 @@ function Label({ color, f, r }) {
     } else {
         if (f == 0 && r == 7)
             label = (
-                <div class={'square-label-double'}>
-                    <div class={'square-label-file'}>
+                <div className={'square-label-double'}>
+                    <div className={'square-label-file'}>
                         {file.toLowerCase()}
                     </div>
-                    <div class={'square-label-rank'}>
+                    <div className={'square-label-rank'}>
                         {rank}
                     </div>
                 </div>
             );
         else if (f == 0) {
             label = (
-                <div class={'square-label-rank'}>
+                <div className={'square-label-rank'}>
                     {rank}
                 </div>
             );
         }
         else if (r == 7) {
             label = (
-                <div class={'square-label-file'}>
+                <div className={'square-label-file'}>
                     {file.toLowerCase()}
                 </div>
             );

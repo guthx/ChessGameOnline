@@ -1,0 +1,18 @@
+<svg width="45" height="45" xmlns="http://www.w3.org/2000/svg">
+ <g>
+  <title>background</title>
+  <rect x="-1" y="-1" width="47" height="47" id="canvas_background" fill="none"/>
+ </g>
+
+ <g>
+  <title>Layer 1</title>
+  <g fill="#2a2a2e" fill-rule="evenodd" stroke="#2a2a2e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" id="svg_1">
+   <g fill="#2a2a2e" id="svg_2">
+    <path d="m9,36c3.39,-0.97 10.11,0.43 13.5,-2c3.39,2.43 10.11,1.03 13.5,2c0,0 1.65,0.54 3,2c-0.68,0.97 -1.65,0.99 -3,0.5c-3.39,-0.97 -10.11,0.46 -13.5,-1c-3.39,1.46 -10.11,0.03 -13.5,1c-1.354,0.49 -2.323,0.47 -3,-0.5c1.354,-1.94 3,-2 3,-2z" id="svg_3"/>
+    <path d="m15,32c2.5,2.5 12.5,2.5 15,0c0.5,-1.5 0,-2 0,-2c0,-2.5 -2.5,-4 -2.5,-4c5.5,-1.5 6,-11.5 -5,-15.5c-11,4 -10.5,14 -5,15.5c0,0 -2.5,1.5 -2.5,4c0,0 -0.5,0.5 0,2z" id="svg_4"/>
+    <path d="m25,8a2.5,2.5 0 1 1 -5,0a2.5,2.5 0 1 1 5,0z" id="svg_5"/>
+   </g>
+   <path d="m17.5,26l10,0m-12.5,4l15,0m-7.5,-14.5l0,5m-2.5,-2.5l5,0" stroke="#2a2a2e" id="svg_6"/>
+  </g>
+ </g>
+</svg>

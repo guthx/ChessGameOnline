@@ -36,6 +36,7 @@ namespace ChessGameOnline
                     NamingStrategy = new CamelCaseNamingStrategy()
                 };
                 options.PayloadSerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+                options.PayloadSerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
             });
 
             // In production, the React files will be served from this directory

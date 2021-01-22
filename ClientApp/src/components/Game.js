@@ -1,68 +1,108 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import Board from './Board/Board';
-import Timers from './Board/Timers';
+import RightMenu from './RightMenu';
 import EndGame from './EndGame';
 import Buttons from './Buttons';
 import useSound from 'use-sound';
 import moveSound from '../sounds/move1.mp3';
-
+import Gamestate from '../GameLogic/Gamestate';
 
 import { Color, drawStates, rematchStates } from '../enums';
+import MoveHistory from './MoveHistory';
+import PieceDifference from './Board/PieceDifference';
 
 
 
 export function Game(props) {
     const [gameId] = useState(props.match.params.id);
-    const [gameState, setGameState] = useState({
-        gamestate: {
-            board: [],
-            toMove: [],
-            turnCount: 0,
-            whiteTime: 0,
-            blackTime: 0,
-            gameResult: "ACTIVE",
-            lastMove: null,
-            takebackState: drawStates.NEUTRAL
-        },
-        toMove: false,
-        awaitingPromotion: null,
-        checkmate: false,
-        winner: null,
-        color: Color.SPECTATE
-    });
-    const gameStateRef = useRef();
-    gameStateRef.current = gameState;
-    const updateState = newState => setGameState(Object.assign({}, gameStateRef.current, newState));
+    const [gamestate, setGamestate] = useState(new Gamestate("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+    const [tempGamestate, setTempGamestate] = useState(null);
+    const [awaitingPromotion, setAwaitingPromotion] = useState(null);
+    const [lastMove, setLastMove] = useState(null);
+    const [gameResult, setGameResult] = useState("ACTIVE");
+    const [toMove, setToMove] = useState(false);
+    const toMoveRef = useRef();
+    toMoveRef.current = toMove;
+    const [gameOver, setGameOver] = useState(false);
+    const [color, setColor] = useState(Color.SPECTATE);
+    const [takebackState, setTakebackState] = useState(drawStates.NEUTRAL);
+    const [timers, setTimers] = useState({ whiteTime: 0, blackTime: 0 });
     const colorRef = useRef();
-    colorRef.current = gameState.color;
+    colorRef.current = color;
     const [rematchState, setRematchState] = useState(rematchStates.NEUTRAL);
     const [drawState, setDrawState] = useState(drawStates.NEUTRAL);
+    const [moveHistory, setMoveHistory] = useState([]);
+    const moveHistoryRef = useRef();
+    moveHistoryRef.current = moveHistory;
+    const [positionHistory, setPositionHistory] = useState([]);
+    const positionHistoryRef = useRef();
+    positionHistoryRef.current = positionHistory;
     const [playMoveSound] = useSound(moveSound);
 
+
     useEffect(() => {
-        props.hubConnection.on('updateGameState', gamestate => {
-            let toMove;
-            let takeback;
-            if (gamestate.toMove == colorRef.current) {
-                toMove = true;
-                takeback = drawStates.WAITING;
+        props.hubConnection.on('updateGameState', response => {
+            var newGamestate = new Gamestate(response.fen);
+            setLastMove(response.lastMove);
+            setGamestate(newGamestate);
+            if (response.gameResult != undefined) {
+                setGameResult(response.gameResult);
+                setGameOver(true);
+            }
+            setTimers({
+                whiteTime: response.whiteTime,
+                blackTime: response.blackTime
+            });
+            setAwaitingPromotion(null);
+            if (colorRef.current == newGamestate.toMove) {
+                setToMove(true);
+                setTakebackState(drawStates.WAITING);
             }
             else {
-                toMove = false;
-                takeback = drawStates.NEUTRAL;
+                setToMove(false);
+                setTakebackState(drawStates.NEUTRAL);
+            }       
+            setMoveHistory([
+                ...moveHistoryRef.current,
+                response.moveNotation
+            ]);
+            setPositionHistory([
+                ...positionHistoryRef.current,
+                response.fen
+            ]);
+            document.getElementById('move-history').scrollTop = document.getElementById('move-history').scrollHeight;
+            setTempGamestate(null);
+            
+        });
+        props.hubConnection.on('setGameState', response => {
+            var newGamestate = new Gamestate(response.fen);
+            setLastMove(response.lastMove);
+            setGamestate(newGamestate);
+            if (response.gameResult != undefined) {
+                setGameResult(response.gameResult);
             }
-            updateState({
-                gamestate: gamestate,
-                toMove: toMove,
-                awaitingPromotion: null,
-                checkmate: gamestate.gameOver,
-                takebackState: takeback
+            setTimers({
+                whiteTime: response.whiteTime,
+                blackTime: response.blackTime
             });
+            setAwaitingPromotion(null);
+            if (response.gameResult != undefined) {
+                setGameResult(response.gameResult);
+                setGameOver(true);
+            }
+            if (colorRef.current == newGamestate.toMove) {
+                setToMove(true);
+                setTakebackState(drawStates.WAITING);
+            }
+            else {
+                setToMove(false);
+                setTakebackState(drawStates.NEUTRAL);
+            }    
+            setMoveHistory(response.moveHistory);
+            setPositionHistory(response.positionHistory);
         });
         props.hubConnection.on('awaitingPromotion', position => {
-            updateState({
-                awaitingPromotion: position
-            });
+            setAwaitingPromotion(position);
         });
         props.hubConnection.on('drawRejected', () => {
             setDrawState(drawStates.REJECTED);
@@ -77,10 +117,10 @@ export function Game(props) {
             setDrawState(drawStates.PROPOSED);
         });
         props.hubConnection.on('takebackRequested', () => {
-            updateState({ takebackState: drawStates.PROPOSED });
+            setTakebackState(drawStates.PROPOSED);
         });
         props.hubConnection.on('takebackRejected', () => {
-            updateState({ takebackState: drawStates.WAITING });
+            setTakebackState(drawStates.WAITING);
         });
         props.hubConnection.on('rematchAccepted', () => {
             setRematchState(rematchStates.ACCEPTED);
@@ -90,6 +130,9 @@ export function Game(props) {
         });
         props.hubConnection.on('rematch', () => {
             setRematchState(rematchStates.NEUTRAL);
+            setDrawState(drawStates.NEUTRAL);
+            setTakebackState(drawStates.NEUTRAL);
+            setGameOver(false);
             joinGame();
         });
         joinGame();
@@ -97,17 +140,17 @@ export function Game(props) {
 
     useEffect(() => {
         playMoveSound();
-    }, [gameState.gamestate]);
+    }, [gamestate]);
 
     const move = (src, dst) => {
-        if (gameState.toMove == true) {
+        if (toMoveRef.current == true) {
             props.hubConnection.invoke('Move', src, dst);
         }
     };
 
     const proposeTakeback = () => {
         props.hubConnection.invoke('RequestTakeback');
-        updateState({ takebackState: drawStates.WAITING });
+        setTakebackState(drawStates.WAITING);
     };
 
     const respondTakeback = (response) => {
@@ -118,17 +161,11 @@ export function Game(props) {
         props.hubConnection.invoke('JoinGame', parseInt(gameId))
             .then(color => {
                 if (color == "WHITE")
-                    updateState({
-                        color: Color.WHITE
-                    });
+                    setColor(Color.WHITE);
                 else if (color == "BLACK")
-                    updateState({
-                        color: Color.BLACK
-                    });
+                    setColor(Color.BLACK);
                 else
-                    updateState({
-                        color: Color.SPECTATE
-                    });
+                    setColor(Color.SPECTATE);
                 props.hubConnection.invoke("Update");
             });
     }
@@ -151,7 +188,7 @@ export function Game(props) {
         if (response == true) {
             setRematchState(rematchStates.AWAITING);
         } else {
-            updateState({ checkmate: false });
+            setGameOver(false);
         }
     }
 
@@ -159,37 +196,46 @@ export function Game(props) {
         props.hubConnection.invoke('Resign');
     }
 
-    
+    const viewPreviousState = (positionNumber) => {
+        console.log(positionNumber);
+        if (positionNumber >= positionHistory.length - 1)
+            setTempGamestate(null);
+        else
+            setTempGamestate(new Gamestate(positionHistory[positionNumber]));
+    }
 
     return (
-        <div className={'board-container'}>
+        <div className={'game-container'}>
             <Buttons
                 proposeDraw={proposeDraw}
                 respondDraw={respondDraw}
                 proposeTakeback={proposeTakeback}
                 respondTakeback={respondTakeback}
-                takebackState={gameState.takebackState}
+                takebackState={takebackState}
                 drawState={drawState}
                 resign={resign}
             />
             <Board
-                gamestate={gameState.gamestate}
-                awaitingPromotion={gameState.awaitingPromotion}
-                color={gameState.color}
+                gamestate={gamestate}
+                tempGamestate={tempGamestate}
+                awaitingPromotion={awaitingPromotion}
+                color={color}
                 move={move}
                 promote={promote}
+                lastMove={lastMove}
             />
-            <Timers
-                whiteTime={gameState.gamestate.whiteTime}
-                blackTime={gameState.gamestate.blackTime}
-                toMove={gameState.gamestate.toMove}
-                turnCount={gameState.gamestate.turnCount}
-                color={gameState.color}
+            <RightMenu
+                whiteTime={timers.whiteTime}
+                blackTime={timers.blackTime}
+                toMove={gamestate.toMove}
+                color={color}
+                moveHistory={moveHistory}
+                viewState={viewPreviousState}
             />
             <EndGame
-                gameResult={gameState.gamestate.gameResult}
+                gameResult={gameResult}
                 rematchState={rematchState}
-                checkmate={gameState.checkmate}
+                checkmate={gameOver}
                 respondRematch={respondRematch}
             />
         </div>

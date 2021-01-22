@@ -1,16 +1,16 @@
-﻿import React, { useEffect, useState, useRef } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { Color } from '../../enums';
+import PieceDifference from './PieceDifference';
 import Square from './Square';
-import Label from './Label';
 
-export default function Board({ gamestate, awaitingPromotion, color, move, promote }) {
+function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, tempGamestate }) {
     const [squares, setSquares] = useState([]);
+    const [tempSquares, setTempSquares] = useState([]);
     const [hSquares, setHSquares] = useState([]);
     const [selectedPiece, setSelectedPiece] = useState({
         element: null,
         square: null
     });
-
     useEffect(() => {
         if (gamestate.board.length > 0) {
             let sq = [];
@@ -22,7 +22,7 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
                         symbol = '-';
                     else
                         symbol = gamestate.board[f][r].symbol;
-                    if ((r + f) % 2 != 0)
+                    if ((r + f) % 2 !== 0)
                         backgroundClass = 'white-square';
                     else
                         backgroundClass = 'black-square';
@@ -33,17 +33,22 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
                         selected: false,
                         moved: false,
                         promotion: false,
+                        checked: false,
                         file: f,
                         rank: r,
                         color: color
                     });
                 }
             }
-            if (gamestate.lastMove != null && gamestate.lastMove.item1 != null) {
-                let from = gamestate.lastMove.item1;
-                let to = gamestate.lastMove.item2;
+            if (lastMove != null && lastMove.item1 != null) {
+                let from = lastMove.item1;
+                let to = lastMove.item2;
                 sq[index(from.file, from.rank)].moved = true;
                 sq[index(to.file, to.rank)].moved = true;
+            }
+            if (gamestate.check != undefined) {
+                console.log('checked');
+                sq[index(gamestate.check.file, gamestate.check.rank)].checked = true;
             }
             setSquares(sq);
             setHSquares([]);
@@ -55,7 +60,7 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
             let sq = squares.slice();
             var file = awaitingPromotion[0].charCodeAt() - 'A'.charCodeAt();
             var rank = awaitingPromotion[1] - 1;
-            if (color == Color.WHITE || color == Color.SPECTATE) {
+            if (color === Color.WHITE || color === Color.SPECTATE) {
                 sq[index(file, rank)].symbol = 'Q'
                 sq[index(file, rank)].promotion = true;
                 sq[index(file, rank - 1)].symbol = 'R'
@@ -79,10 +84,48 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
         }
     }, [awaitingPromotion]);
 
+    useEffect(() => {
+        if (tempGamestate == null)
+            setTempSquares([]);
+        else
+        {
+            let sq = [];
+            for (let r = 7; r >= 0; r--) {
+                for (let f = 0; f < 8; f++) {
+                    let symbol;
+                    let backgroundClass;
+                    if (tempGamestate.board[f][r] == null)
+                        symbol = '-';
+                    else
+                        symbol = tempGamestate.board[f][r].symbol;
+                    if ((r + f) % 2 !== 0)
+                        backgroundClass = 'white-square';
+                    else
+                        backgroundClass = 'black-square';
+                    sq.push({
+                        symbol: symbol,
+                        backgroundClass: backgroundClass,
+                        highlighted: false,
+                        selected: false,
+                        moved: false,
+                        promotion: false,
+                        checked: false,
+                        file: f,
+                        rank: r,
+                        color: color
+                    });
+                }
+            }
+            if (tempGamestate.check != null) {
+                sq[index(tempGamestate.check.file, tempGamestate.check.rank)].checked = true;
+            }
+            setTempSquares(sq);
+        }
+    }, [tempGamestate])
 
     const mouseDown = (f, r, piece) => {
         let i = index(f, r);
-        if (color == gamestate.toMove) {
+        if (color === gamestate.toMove) {
             if (hSquares.includes(i)) {
                 let j = index(selectedPiece.square.file, selectedPiece.square.rank);
                 let sq = squares.slice();
@@ -97,9 +140,9 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
             }
             else {
                 if (gamestate.board[f][r] != null &&
-                    gamestate.board[f][r].color == color) {
+                    gamestate.board[f][r].color === color) {
                     clearHighlight();
-                    if (gamestate.board[f][r].validMoves.length > 0) {
+                    if (gamestate.board[f][r].validMoves(gamestate).length > 0) {
                         highlightValidMoves(f, r);
                         setSelectedPiece({
                             element: piece,
@@ -136,7 +179,7 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
 
         let sq = squares.slice();
         let hsq = [];
-        gamestate.board[f][r].validMoves.forEach(move => {
+        gamestate.board[f][r].validMoves(gamestate).forEach(move => {
             let i = index(move.file, move.rank);
             sq[i].highlighted = true;
             hsq.push(i.valueOf());
@@ -185,13 +228,47 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
         }
     }
 
-
-
-    if (squares.length == 0)
+    if (tempSquares.length > 0) {
+        if (color === Color.WHITE || color === Color.SPECTATE)
+            return (
+                <div
+                    className={'board'}>
+                    {tempSquares.map((square, i) => (
+                        <Square
+                            state={square}
+                            mouseDown={() => { }}
+                            mouseUp={() => { }}
+                            key={i}
+                        />
+                    ))}
+                </div>
+            );
+        else
+            return (
+                <div
+                    className={'board'}>
+                    {tempSquares.slice().reverse().map((square, i) => (
+                        <Square
+                            mouseDown={() => { }}
+                            mouseUp={() => { }}
+                            state={square}
+                            key={i}
+                        />
+                    ))}
+                </div>
+            );
+    }
+    else if (squares.length === 0)
         return null;
     else {
-        if (color == Color.WHITE || color == Color.SPECTATE)
+        if (color === Color.WHITE || color === Color.SPECTATE)
             return (
+                <div id={'board-container'}>
+                    <PieceDifference
+                        pieceDifference={gamestate.pieceDifference}
+                        color={Color.BLACK}
+                        points={gamestate.points}
+                    />
                 <div
                     onMouseMove={e => mouseMove(e)}
                     onMouseLeave={e => mouseUp(e)}
@@ -205,11 +282,26 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
                                 promote={promote}
                             />
                     ))}
+                    </div>
+                    <PieceDifference
+                        pieceDifference={gamestate.pieceDifference}
+                        color={Color.WHITE}
+                        points={gamestate.points}
+                    />
                 </div>
             );
         else
             return (
-                <div onMouseMove={e => mouseMove(e)} className={'board'}>
+                <div id={'board-container'}>
+                    <PieceDifference
+                        pieceDifference={gamestate.pieceDifference}
+                        color={Color.WHITE}
+                        points={gamestate.points}
+                    />
+                <div
+                    onMouseMove={e => mouseMove(e)}
+                    onMouseLeave={e => mouseUp(e)}
+                    className={'board'}>
                     {squares.slice().reverse().map((square, i) => (
                             <Square
                                 state={square}
@@ -219,9 +311,20 @@ export default function Board({ gamestate, awaitingPromotion, color, move, promo
                                 promote={promote}
                             />
                     ))}
+                    </div>
+                    <PieceDifference
+                        pieceDifference={gamestate.pieceDifference}
+                        color={Color.BLACK}
+                        points={gamestate.points}
+                    />
                 </div>
             );
     }
     
 }
 
+export default React.memo(Board, (prevProps, nextProps) => {
+    return prevProps.gamestate === nextProps.gamestate &&
+        prevProps.awaitingPromotion === nextProps.awaitingPromotion &&
+        prevProps.tempGamestate == nextProps.tempGamestate;
+});

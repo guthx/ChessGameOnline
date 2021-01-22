@@ -156,10 +156,12 @@ function Draw({
                     </button>
                 </div>
             );
+        default:
+            return null;
     }
 }
 
 export default React.memo(Buttons, (prevProps, nextProps) => {
-    return prevProps.drawState == nextProps.drawState &&
-        prevProps.takebackState == nextProps.takebackState;
+    return prevProps.drawState === nextProps.drawState &&
+        prevProps.takebackState === nextProps.takebackState;
 });

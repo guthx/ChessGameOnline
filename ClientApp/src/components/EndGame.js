@@ -26,6 +26,9 @@ function EndGame({
         case "STALEMATE":
             message = "Stalemate";
             break;
+        default:
+            message = "Unknown game result"
+            break;
     }
     switch (rematchState) {
         case rematchStates.NEUTRAL:
@@ -100,6 +103,9 @@ function EndGame({
                 </div>
             );
             break;
+        default:
+            rematchComponent = null;
+            break;
     }
     return (
         <Dialog open={checkmate} fullWidth={true} maxWidth={'xs'}>
@@ -113,7 +119,7 @@ function EndGame({
 }
 
 export default React.memo(EndGame, (prevProps, nextProps) => {
-    return prevProps.checkmate == nextProps.checkmate &&
-        prevProps.gameResult == nextProps.gameResult &&
-        prevProps.rematchState == nextProps.rematchState;
+    return prevProps.checkmate === nextProps.checkmate &&
+        prevProps.gameResult === nextProps.gameResult &&
+        prevProps.rematchState === nextProps.rematchState;
 });

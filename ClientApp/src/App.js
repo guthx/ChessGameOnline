@@ -1,7 +1,7 @@
-import React, { Component, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Home } from './components/Home';
 import { Game } from './components/Game';
-import { Switch, BrowserRouter, Route, useHistory } from 'react-router-dom';
+import { Route, useHistory } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import Cookies from 'js-cookie';
 
@@ -14,7 +14,7 @@ export default function App()  {
     const [connected, setConnected] = useState(false);
     const history = useHistory();
     useEffect(() => {
-        if (token != undefined) {
+        if (token !== undefined) {
             var hub = new signalR.HubConnectionBuilder()
                 .withUrl("/hubs/game", {
                     accessTokenFactory: () => {
@@ -42,7 +42,7 @@ export default function App()  {
     }, [token]);
 
     useEffect(() => {
-        if (token == undefined) {
+        if (token === undefined) {
             fetch('api/Game/jwt')
                 .then(res => res.text())
                 .then(jwt => {
@@ -59,7 +59,7 @@ export default function App()  {
       
         <div>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous" />
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossOrigin="anonymous" />
      
                 
             <Route

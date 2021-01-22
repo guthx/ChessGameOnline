@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Timers;
 using ChessGame;
+using ChessGameOnline.Services.Responses;
 
 namespace ChessGameOnline.Services
 {
@@ -91,7 +92,7 @@ namespace ChessGameOnline.Services
         {
             int gameId = _gameService.PlayersGamestates[Context.UserIdentifier];
             var gamestate = _gameService.Gamestates[gameId];
-            await Clients.Caller.SendAsync("updateGameState", new GamestateResponse(gamestate));
+            await Clients.Caller.SendAsync("setGameState", new GamestateResponse(gamestate));
         }
 
 
@@ -199,11 +200,9 @@ namespace ChessGameOnline.Services
                         await Clients.Group(gameId.ToString()).SendAsync("drawRejected");
                     } else
                     {
-                        await Clients.Group(gameId.ToString()).SendAsync("drawAccepted");
                         gamestate.GameOver = true;
                         gamestate.GameResult = GameResult.DRAW;
-                        await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new GamestateResponse(gamestate));
-                        _gameService.RemoveGame(gameId);
+                        await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new UpdateGamestateResponse(gamestate));
                     }
                 }
             }
@@ -221,7 +220,7 @@ namespace ChessGameOnline.Services
                     gamestate.WhiteTimer.Stop();
                     gamestate.GameOver = true;
                     gamestate.GameResult = GameResult.BLACK_WIN;
-                    await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new GamestateResponse(gamestate));
+                    await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new UpdateGamestateResponse(gamestate));
                 }
                 else if (gamestate.Black == Context.UserIdentifier)
                 {
@@ -229,7 +228,7 @@ namespace ChessGameOnline.Services
                     gamestate.WhiteTimer.Stop();
                     gamestate.GameOver = true;
                     gamestate.GameResult = GameResult.WHITE_WIN;
-                    await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new GamestateResponse(gamestate));
+                    await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new UpdateGamestateResponse(gamestate));
                 }
             }
         }
@@ -271,7 +270,7 @@ namespace ChessGameOnline.Services
                         gamestate.BlackStopwatch.Restart();
                         gamestate.BlackTimer.Start();
                         _gameService.Gamestates[gameId] = gamestate;
-                        await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new GamestateResponse(gamestate));
+                        await Clients.Group(gameId.ToString()).SendAsync("setGameState", new GamestateResponse(gamestate));
                     }
                     else if (gamestate.Black == Context.UserIdentifier &&
                         gamestate.ToMove == Color.BLACK &&
@@ -282,7 +281,7 @@ namespace ChessGameOnline.Services
                         gamestate.WhiteStopwatch.Restart();
                         gamestate.WhiteTimer.Start();
                         _gameService.Gamestates[gameId] = gamestate;
-                        await Clients.Group(gameId.ToString()).SendAsync("updateGameState", new GamestateResponse(gamestate));
+                        await Clients.Group(gameId.ToString()).SendAsync("setGameState", new GamestateResponse(gamestate));
                     }
                 }
                 else
@@ -319,6 +318,18 @@ namespace ChessGameOnline.Services
                     await Clients.OthersInGroup(gameId.ToString()).SendAsync("rematchDeclined");
                 }
             }
+        }
+
+        public Piece[,] GetPreviousPosition(int positionNumber)
+        {
+            int gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                var gamestate = _gameService.Gamestates[gameId];
+                var previousPosition = Gamestate.GetBoardFromFen(gamestate.PositionHistory[positionNumber]);
+                return previousPosition;
+            }
+            return null;
         }
     }
 }

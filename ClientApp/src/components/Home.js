@@ -1,14 +1,10 @@
-﻿import React, { useState, useEffect } from 'react';
-import Cookies from 'js-cookie';
-import { withRouter } from 'react-router-dom';
+﻿import React, { useState } from 'react';
 import { Col, Grid, Row } from 'react-bootstrap';
 import { Container, Button } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 
 
 export function Home(props) {
-    
-    const [sessionId, setSessionId] = useState("");
     const [gameId, setGameId] = useState(0);
     const [awaiting, setAwaiting] = useState(false);
     const [searching, setSearching] = useState(false);
@@ -36,7 +32,7 @@ export function Home(props) {
     }
 
     const AwaitingOpponent = () => {
-        if (awaiting == true)
+        if (awaiting === true)
             return (
                 <div>
                     <div>
@@ -53,12 +49,12 @@ export function Home(props) {
     }
 
     const SearchingOpponent = () => {
-        if (searching == true) {
+        if (searching === true) {
             return (
                 <div id={'searching'}>
                     Searching for an opponent...
                     <div id={'spinner'}>
-                        <img src={require('../images/spinner.gif')} />
+                        <img src={require('../images/spinner.gif')} alt="spinner" />
                     </div>
                 </div>
             );
@@ -74,22 +70,14 @@ export function Home(props) {
     const classes = useStyles();
     console.log(props.history);
     return (
-        <Container fluid height={'100%'}>
-            <Col sm={3}></Col>
-                <Col sm={6}>
-                <Row className={'h-50'}>
-                    <img src={require('../images/horse.jpg')}></img>
-                </Row>
-                <Row className={'h-25'}>
+        <div id={'wrapper'}>
+        <div id={'home-grid'}>
+                    <img src={require('../images/horse.jpg')} alt="knight"></img>
                     <Button variant="contained" size="large" color="primary" className={classes.button} onClick={createGame} >Create custom game</Button>
                     <Button variant="contained" size="large" color="primary" className={classes.button} onClick={searchGame} >Search an opponent</Button>
-                </Row>
-                <Row className={'h-25'}>
                     <SearchingOpponent />
                     <AwaitingOpponent />
-                </Row>
-                </Col>
-            <Col sm={3}></Col>
-        </Container>
+            </div>
+        </div>
     );
 }

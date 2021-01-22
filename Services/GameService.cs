@@ -335,7 +335,7 @@ namespace ChessGameOnline.Services
                 (gamestate.Black == player && gamestate.ToMove == Color.BLACK))
             {
                 var result = gamestate.Promote(pieceType);
-                return new MoveResponse(result, gamestate);
+                return new MoveResponse(result, gamestate, true);
             }
 
             return new MoveResponse(MoveResult.WRONG_COLOR, gamestate);

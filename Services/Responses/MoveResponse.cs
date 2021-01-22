@@ -10,12 +10,12 @@ namespace ChessGameOnline.Services.Responses
     public class MoveResponse
     {
         public string MoveResult { get; }
-        public GamestateResponse Gamestate { get; }
+        public UpdateGamestateResponse Gamestate { get; }
 
-        public MoveResponse(MoveResult moveResult, MultiplayerGamestate gamestate)
+        public MoveResponse(MoveResult moveResult, MultiplayerGamestate gamestate, bool promoted = false)
         {
             MoveResult = moveResult.ToString();
-            Gamestate = new GamestateResponse(gamestate);
+            Gamestate = new UpdateGamestateResponse(gamestate, promoted);
         }
     }
 }
