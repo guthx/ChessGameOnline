@@ -105,4 +105,50 @@ export default class Bishop extends Piece {
         else return false;
     }
 
+    possibleSquares() {
+        var possibleSquares = [];
+        var f, r;
+        //up-right movement
+        f = 1;
+        r = 1;
+        while (this.file + f < 8 && this.rank + r < 8) {
+            var nFile = this.file + f;
+            var nRank = this.rank + r;
+            possibleSquares.push({ file: nFile, rank: nRank });
+            f++;
+            r++;
+        }
+        //up-left movement
+        f = -1;
+        r = 1;
+        while (this.file + f >= 0 && this.rank + r < 8) {
+            var nFile = this.file + f;
+            var nRank = this.rank + r;
+            possibleSquares.push({ file: nFile, rank: nRank });
+            f--;
+            r++;
+        }
+        //down-right movement
+        f = 1;
+        r = -1;
+        while (this.file + f < 8 && this.rank + r >= 0) {
+            var nFile = this.file + f;
+            var nRank = this.rank + r;
+            possibleSquares.push({ file: nFile, rank: nRank });
+            f++;
+            r--;
+        }
+        //down-left movement
+        f = -1;
+        r = -1;
+        while (this.file + f >= 0 && this.rank + r >= 0) {
+            var nFile = this.file + f;
+            var nRank = this.rank + r;
+            possibleSquares.push({ file: nFile, rank: nRank });
+            f--;
+            r--;
+        }
+        return possibleSquares;
+    }
+
 }

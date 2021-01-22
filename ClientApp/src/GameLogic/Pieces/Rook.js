@@ -99,4 +99,22 @@ export default class Rook extends Piece {
         }
         else return false;
     }
+
+    possibleSquares() {
+        var possibleSquares = [];
+        for (var i = this.file + 1; i < 8; i++) {
+            possibleSquares.push({ file: i, rank: this.rank });
+        }
+        for (var i = this.file - 1; i >= 0; i--) {
+            possibleSquares.push({ file: i, rank: this.rank });
+        }
+        for (var i = this.rank + 1; i < 8; i++) {
+            possibleSquares.push({ file: this.file, rank: i });
+        }
+        for (var i = this.rank - 1; i >= 0; i--) {
+            possibleSquares.push({ file: this.file, rank: i });
+        }
+
+        return possibleSquares;
+    }
 }

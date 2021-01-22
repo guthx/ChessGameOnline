@@ -110,4 +110,16 @@ export default class King extends Piece {
             }
         });
     }
+
+    possibleSquares() {
+        var possibleSquares = [];
+        for (var f = -1; f <= 1; f++) {
+            for (var r = -1; r <= 1; r++) {
+                if (!(f == 0 && r == 0) && this.file + f >= 0 && this.file + f <= 7 &&
+                    this.rank + r >= 0 && this.rank + r <= 7)
+                    possibleSquares.push({ file: this.file + f, rank: this.rank + r });
+            }
+        }
+        return possibleSquares;
+    }
 }

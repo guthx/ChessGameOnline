@@ -104,4 +104,36 @@ export default class Pawn extends Piece {
             else return false;
         }
     }
+
+    possibleSquares() {
+        var possibleSquares = [];
+        if (this.color == Color.WHITE) {
+            if (this.rank == 1) {
+                possibleSquares.push({ file: this.file, rank: 2 });
+                possibleSquares.push({ file: this.file, rank: 3 });
+                }
+            else {
+                possibleSquares.push({ file: this.file, rank: this.rank + 1 });
+            }
+            if (this.file > 0)
+                possibleSquares.push({ file: this.file - 1, rank: this.rank + 1 });
+            if (this.file < 7)
+                possibleSquares.push({ file: this.file + 1, rank: this.rank + 1 });
+        }
+        else {
+            if (this.rank == 6) {
+                possibleSquares.push({ file: this.file, rank: 5 });
+                possibleSquares.push({ file: this.file, rank: 4 });
+            }
+            else {
+                possibleSquares.push({ file: this.file, rank: this.rank - 1 });
+            }
+            if (this.file > 0)
+                possibleSquares.push({ file: this.file - 1, rank: this.rank - 1 });
+            if (this.file < 7)
+                possibleSquares.push({ file: this.file + 1, rank: this.rank - 1 });
+        }
+
+        return possibleSquares;
+    }
 }

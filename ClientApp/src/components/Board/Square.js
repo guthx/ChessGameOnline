@@ -35,6 +35,8 @@ function Square(props) {
             squareClass += ' dragged-over';
         if (state.checked)
             squareClass += ' checked';
+        if (state.premove)
+            squareClass += ' premove';
         let highlight = null;
         if (state.highlighted === true) {
             highlight = (<span className={'dot'}></span>);

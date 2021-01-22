@@ -30,4 +30,18 @@ export default class Knight extends Piece {
             return true;
         else return false;
     }
+
+    possibleSquares() {
+        var moveOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+        var possibleSquares = [];
+
+        for (var i = 0; i < 8; i++) {
+            var newfile = this.file + moveOffsets[i][0];
+            var newrank = this.rank + moveOffsets[i][1];
+            if (newfile >= 0 && newfile < 8 && newrank >= 0 && newrank < 8)
+                possibleSquares.push({ file: newfile, rank: newrank });
+        }
+
+        return possibleSquares;
+    }
 }

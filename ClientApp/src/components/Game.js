@@ -6,10 +6,25 @@ import Buttons from './Buttons';
 import useSound from 'use-sound';
 import moveSound from '../sounds/move1.mp3';
 import Gamestate from '../GameLogic/Gamestate';
-
+import WHITE_QUEEN from '../images/cburnett/wQ.svg';
+import WHITE_ROOK from '../images/cburnett/wR.svg';
+import WHITE_BISHOP from '../images/cburnett/wB.svg';
+import WHITE_KNIGHT from '../images/cburnett/wN.svg';
+import WHITE_PAWN from '../images/cburnett/wP.svg';
+import WHITE_KING from '../images/cburnett/wK.svg';
+import BLACK_QUEEN from '../images/cburnett/bQ.svg';
+import BLACK_ROOK from '../images/cburnett/bR.svg';
+import BLACK_BISHOP from '../images/cburnett/bB.svg';
+import BLACK_KNIGHT from '../images/cburnett/bN.svg';
+import BLACK_PAWN from '../images/cburnett/bP.svg';
+import BLACK_KING from '../images/cburnett/bK.svg';
+import MiniPawn from '../images/cburnett/miniP.svg';
+import MiniKnight from '../images/cburnett/miniN.svg';
+import MiniBishop from '../images/cburnett/miniB.svg';
+import MiniRook from '../images/cburnett/miniR.svg';
+import MiniQueen from '../images/cburnett/miniQ.svg';
+import Spinner from '../images/spinner.gif';
 import { Color, drawStates, rematchStates } from '../enums';
-import MoveHistory from './MoveHistory';
-import PieceDifference from './Board/PieceDifference';
 
 
 
@@ -35,11 +50,28 @@ export function Game(props) {
     const moveHistoryRef = useRef();
     moveHistoryRef.current = moveHistory;
     const [positionHistory, setPositionHistory] = useState([]);
+    const [premove, setPremove] = useState(null);
     const positionHistoryRef = useRef();
     positionHistoryRef.current = positionHistory;
     const [playMoveSound] = useSound(moveSound);
-
-
+    const [picturesLoaded, setPicturesLoaded] = useState(0);
+    const picsLoadedRef = useRef();
+    picsLoadedRef.current = picturesLoaded;
+    const pictures = [WHITE_BISHOP, WHITE_KING, WHITE_KNIGHT, WHITE_PAWN, WHITE_QUEEN, WHITE_ROOK,
+        BLACK_BISHOP, BLACK_KING, BLACK_KNIGHT, BLACK_PAWN, BLACK_QUEEN, BLACK_ROOK,
+        MiniBishop, MiniKnight, MiniPawn, MiniQueen, MiniRook];
+    
+    useEffect(() => {
+        pictures.forEach(picture => {
+            const img = new Image();
+            img.src = picture;
+            img.onload = () => {
+                console.log(picturesLoaded);
+                setPicturesLoaded(picsLoadedRef.current + 1);
+            }
+        });
+    }, []);
+    
     useEffect(() => {
         props.hubConnection.on('updateGameState', response => {
             var newGamestate = new Gamestate(response.fen);
@@ -61,7 +93,7 @@ export function Game(props) {
             else {
                 setToMove(false);
                 setTakebackState(drawStates.NEUTRAL);
-            }       
+            }
             setMoveHistory([
                 ...moveHistoryRef.current,
                 response.moveNotation
@@ -72,7 +104,7 @@ export function Game(props) {
             ]);
             document.getElementById('move-history').scrollTop = document.getElementById('move-history').scrollHeight;
             setTempGamestate(null);
-            
+
         });
         props.hubConnection.on('setGameState', response => {
             var newGamestate = new Gamestate(response.fen);
@@ -97,7 +129,7 @@ export function Game(props) {
             else {
                 setToMove(false);
                 setTakebackState(drawStates.NEUTRAL);
-            }    
+            }
             setMoveHistory(response.moveHistory);
             setPositionHistory(response.positionHistory);
         });
@@ -140,13 +172,27 @@ export function Game(props) {
 
     useEffect(() => {
         playMoveSound();
+        executePremove();
     }, [gamestate]);
 
     const move = (src, dst) => {
-        if (toMoveRef.current == true) {
-            props.hubConnection.invoke('Move', src, dst);
-        }
+        props.hubConnection.invoke('Move', src, dst);
     };
+
+    const executePremove = () => {
+        if (premove != null) {
+            if (gamestate.board[premove.src.file][premove.src.rank].color == color &&
+                gamestate.board[premove.src.file][premove.src.rank].validMoves(gamestate).find(m => m.file == premove.dst.file && m.rank == premove.dst.rank) != undefined) {
+                let src = String.fromCharCode(premove.src.file + 65) + (premove.src.rank + 1);
+                let dst = String.fromCharCode(premove.dst.file + 65) + (premove.dst.rank + 1);
+                setPremove(null);
+                move(src, dst);
+            }
+            else {
+                setPremove(null);
+            }
+        }
+    }
 
     const proposeTakeback = () => {
         props.hubConnection.invoke('RequestTakeback');
@@ -203,41 +249,48 @@ export function Game(props) {
         else
             setTempGamestate(new Gamestate(positionHistory[positionNumber]));
     }
-
-    return (
-        <div className={'game-container'}>
-            <Buttons
-                proposeDraw={proposeDraw}
-                respondDraw={respondDraw}
-                proposeTakeback={proposeTakeback}
-                respondTakeback={respondTakeback}
-                takebackState={takebackState}
-                drawState={drawState}
-                resign={resign}
-            />
-            <Board
-                gamestate={gamestate}
-                tempGamestate={tempGamestate}
-                awaitingPromotion={awaitingPromotion}
-                color={color}
-                move={move}
-                promote={promote}
-                lastMove={lastMove}
-            />
-            <RightMenu
-                whiteTime={timers.whiteTime}
-                blackTime={timers.blackTime}
-                toMove={gamestate.toMove}
-                color={color}
-                moveHistory={moveHistory}
-                viewState={viewPreviousState}
-            />
-            <EndGame
-                gameResult={gameResult}
-                rematchState={rematchState}
-                checkmate={gameOver}
-                respondRematch={respondRematch}
-            />
+    if (picturesLoaded == pictures.length)
+        return (
+            <div className={'game-container'}>
+                <Buttons
+                    proposeDraw={proposeDraw}
+                    respondDraw={respondDraw}
+                    proposeTakeback={proposeTakeback}
+                    respondTakeback={respondTakeback}
+                    takebackState={takebackState}
+                    drawState={drawState}
+                    resign={resign}
+                />
+                <Board
+                    gamestate={gamestate}
+                    tempGamestate={tempGamestate}
+                    awaitingPromotion={awaitingPromotion}
+                    color={color}
+                    move={move}
+                    promote={promote}
+                    setPremove={setPremove}
+                    lastMove={lastMove}
+                />
+                <RightMenu
+                    whiteTime={timers.whiteTime}
+                    blackTime={timers.blackTime}
+                    toMove={gamestate.toMove}
+                    color={color}
+                    moveHistory={moveHistory}
+                    viewState={viewPreviousState}
+                />
+                <EndGame
+                    gameResult={gameResult}
+                    rematchState={rematchState}
+                    checkmate={gameOver}
+                    respondRematch={respondRematch}
+                />
+            </div>
+        );
+    else return (
+        <div className={'loading'}>
+            <img src={Spinner} />
         </div>
-    );
+        );
+
 }

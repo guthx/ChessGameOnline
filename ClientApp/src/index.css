@@ -180,6 +180,14 @@ img {
     background-color: darkkhaki;
 }
 
+.black-square.premove {
+    background-color: darkorange;
+}
+
+.white-square.premove {
+    background-color: orange;
+}
+
 .draw-button {
     grid-row: 1;
     background-color: darkorchid;
@@ -399,7 +407,6 @@ img {
 .piece-difference {
     display:flex;
     align-items: center;
-    padding-left: 70vh;
     justify-content: flex-end;
     font-size: 2.5vh;
 }
@@ -407,5 +414,5 @@ img {
 .piece-difference img {
     width: 5vh;
     height: 5vh;
-    margin-left: -2vh;
+    margin-left: -1vh;
 }

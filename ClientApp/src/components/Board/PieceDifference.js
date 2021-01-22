@@ -11,32 +11,32 @@ function PieceDifference({ pieceDifference, color, points }) {
     if (color == Color.WHITE) {
         if (pieceDifference[PieceType.PAWN] > 0) {
             for (let i = 0; i < pieceDifference[PieceType.PAWN]; i++) {
-                images.push(<img src={MiniPawn} alt="Pawn" />);
+                images.push(<img key={images.length} src={MiniPawn} alt="Pawn" />);
             }
         }
         if (pieceDifference[PieceType.KNIGHT] > 0) {
             for (let i = 0; i < pieceDifference[PieceType.KNIGHT]; i++) {
-                images.push(<img src={MiniKnight} alt="Knight" />);
+                images.push(<img key={images.length} src={MiniKnight} alt="Knight" />);
             }
         }
         if (pieceDifference[PieceType.BISHOP] > 0) {
             for (let i = 0; i < pieceDifference[PieceType.BISHOP]; i++) {
-                images.push(<img src={MiniBishop} alt="Bishop" />);
+                images.push(<img key={images.length} src={MiniBishop} alt="Bishop" />);
             }
         }
         if (pieceDifference[PieceType.ROOK] > 0) {
             for (let i = 0; i < pieceDifference[PieceType.ROOK]; i++) {
-                images.push(<img src={MiniRook} alt="Rook" />);
+                images.push(<img key={images.length} src={MiniRook} alt="Rook" />);
             }
         }
         if (pieceDifference[PieceType.QUEEN] > 0) {
             for (let i = 0; i < pieceDifference[PieceType.QUEEN]; i++) {
-                images.push(<img src={MiniQueen} alt="Queen" />);
+                images.push(<img key={images.length} src={MiniQueen} alt="Queen" />);
             }
         }
         if (points > 0) {
             images.push(
-                <div>
+                <div key={images.length}>
                     +{points}
                 </div>
             );
@@ -44,34 +44,34 @@ function PieceDifference({ pieceDifference, color, points }) {
     }
     else {
         if (pieceDifference[PieceType.PAWN] < 0) {
-            for (let i = 0; i > pieceDifference[PieceType.PAWN]; i++) {
-                images.push(<img src={MiniPawn} alt="Pawn" />);
+            for (let i = 0; i > pieceDifference[PieceType.PAWN]; i--) {
+                images.push(<img key={images.length} src={MiniPawn} alt="Pawn" />);
             }
         }
         if (pieceDifference[PieceType.KNIGHT] < 0) {
-            for (let i = 0; i > pieceDifference[PieceType.KNIGHT]; i++) {
-                images.push(<img src={MiniKnight} alt="Knight" />);
+            for (let i = 0; i > pieceDifference[PieceType.KNIGHT]; i--) {
+                images.push(<img key={images.length} src={MiniKnight} alt="Knight" />);
             }
         }
         if (pieceDifference[PieceType.BISHOP] < 0) {
-            for (let i = 0; i > pieceDifference[PieceType.BISHOP]; i++) {
-                images.push(<img src={MiniBishop} alt="Bishop" />);
+            for (let i = 0; i > pieceDifference[PieceType.BISHOP]; i--) {
+                images.push(<img key={images.length} src={MiniBishop} alt="Bishop" />);
             }
         }
         if (pieceDifference[PieceType.ROOK] < 0) {
-            for (let i = 0; i > pieceDifference[PieceType.ROOK]; i++) {
-                images.push(<img src={MiniRook} alt="Rook" />);
+            for (let i = 0; i > pieceDifference[PieceType.ROOK]; i--) {
+                images.push(<img key={images.length} src={MiniRook} alt="Rook" />);
             }
         }
         if (pieceDifference[PieceType.QUEEN] < 0) {
-            for (let i = 0; i > pieceDifference[PieceType.QUEEN]; i++) {
-                images.push(<img src={MiniQueen} alt="Queen" />);
+            for (let i = 0; i > pieceDifference[PieceType.QUEEN]; i--) {
+                images.push(<img key={images.length} src={MiniQueen} alt="Queen" />);
             }
         }
         if (points < 0) {
             images.push(
-                <div>
-                    +{points}
+                <div key={images.length}>
+                    +{-points}
                 </div>
             );
         }

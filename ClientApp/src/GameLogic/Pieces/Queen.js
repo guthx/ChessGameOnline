@@ -28,4 +28,12 @@ export default class Queen extends Piece {
         board[this.file][this.rank] = this;
         return isRookAttacking || isBishopAttacking;
     }
+
+    possibleSquares() {
+        var rook = new Rook(this.file, this.rank, this.color);
+        var bishop = new Bishop(this.file, this.rank, this.color);
+        var moves1 = rook.possibleSquares();
+        var moves2 = bishop.possibleSquares();
+        return moves1.concat(moves2);
+    }
 }

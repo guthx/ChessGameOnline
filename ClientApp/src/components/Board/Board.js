@@ -3,10 +3,11 @@ import { Color } from '../../enums';
 import PieceDifference from './PieceDifference';
 import Square from './Square';
 
-function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, tempGamestate }) {
+function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, setPremove, tempGamestate }) {
     const [squares, setSquares] = useState([]);
     const [tempSquares, setTempSquares] = useState([]);
     const [hSquares, setHSquares] = useState([]);
+    const [premoveSquares, setPremoveSquares] = useState([]);
     const [selectedPiece, setSelectedPiece] = useState({
         element: null,
         square: null
@@ -34,6 +35,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, t
                         moved: false,
                         promotion: false,
                         checked: false,
+                        premove: false,
                         file: f,
                         rank: r,
                         color: color
@@ -52,6 +54,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, t
             }
             setSquares(sq);
             setHSquares([]);
+            setPremoveSquares([]);
         }
     }, [gamestate]);
 
@@ -110,6 +113,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, t
                         moved: false,
                         promotion: false,
                         checked: false,
+                        premove: false,
                         file: f,
                         rank: r,
                         color: color
@@ -148,7 +152,48 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, t
                             element: piece,
                             square: squares[index(f, r)]
                         });
-                    }                  
+                    }
+                }
+                else {
+                    clearHighlight();
+                    setSelectedPiece({
+                        element: null,
+                        square: null
+                    });
+                }
+            }
+        }
+        else {
+            clearPremoveSquares();
+            setPremove(null);
+            if (hSquares.includes(i)) {
+                let j = index(selectedPiece.square.file, selectedPiece.square.rank);
+                let sq = squares.slice();
+                clearHighlight();
+                sq[i].premove = true;
+                sq[j].premove = true;
+                setPremoveSquares([i, j]);
+                setSquares(sq);
+                //TODO Move
+                let src = {
+                    file: selectedPiece.square.file,
+                    rank: selectedPiece.square.rank
+                };
+                let dst = {
+                    file: f,
+                    rank: r
+                };
+                setPremove({ src, dst });
+            }
+            else {
+                if (gamestate.board[f][r] != null &&
+                    gamestate.board[f][r].color === color) {
+                    clearHighlight();
+                    highlightPossibleMoves(f, r);
+                    setSelectedPiece({
+                        element: piece,
+                        square: squares[index(f, r)]
+                    });
                 }
                 else {
                     clearHighlight();
@@ -187,6 +232,17 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, t
         setSquares(sq);
         setHSquares(hsq);
     };
+    const highlightPossibleMoves = (f, r) => {
+        let sq = squares.slice();
+        let hsq = [];
+        gamestate.board[f][r].possibleSquares().forEach(move => {
+            let i = index(move.file, move.rank);
+            sq[i].highlighted = true;
+            hsq.push(i.valueOf());
+        });
+        setSquares(sq);
+        setHSquares(hsq);
+    }
 
     const clearHighlight = () => {
         let sq = squares.slice();
@@ -197,33 +253,77 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, t
         setHSquares([]);
     }
 
+    const clearPremoveSquares = () => {
+        let sq = squares.slice();
+        premoveSquares.forEach(pSquare => {
+            sq[pSquare].premove = false;
+        });
+        setPremoveSquares([]);
+        setSquares(sq);
+    }
+
     const mouseUp = (e, f, r) => {
         if (selectedPiece.element != null) {
-            let i = index(f, r);
-            if (hSquares.includes(i)) {
-                let j = index(selectedPiece.square.file, selectedPiece.square.rank);
-                let sq = squares.slice();
-                let src = String.fromCharCode(selectedPiece.square.file + 65) + (selectedPiece.square.rank + 1);
-                let dst = String.fromCharCode(f + 65) + (r + 1);
-                
-                sq[i].symbol = selectedPiece.square.symbol;
-                sq[j].symbol = '-';
-                setSquares(sq);
-                clearHighlight();
-                
-                selectedPiece.element.style.transform = '';
-                setSelectedPiece({
-                    square: null,
-                    element: null
-                });
-                move(src, dst);
+            if (color === gamestate.toMove) {
+                let i = index(f, r);
+                if (hSquares.includes(i)) {
+                    let j = index(selectedPiece.square.file, selectedPiece.square.rank);
+                    let sq = squares.slice();
+                    let src = String.fromCharCode(selectedPiece.square.file + 65) + (selectedPiece.square.rank + 1);
+                    let dst = String.fromCharCode(f + 65) + (r + 1);
+
+                    sq[i].symbol = selectedPiece.square.symbol;
+                    sq[j].symbol = '-';
+                    setSquares(sq);
+                    clearHighlight();
+
+                    selectedPiece.element.style.transform = '';
+                    setSelectedPiece({
+                        square: null,
+                        element: null
+                    });
+                    move(src, dst);
+                }
+                else {
+                    selectedPiece.element.style.transform = '';
+                    setSelectedPiece({
+                        ...selectedPiece,
+                        element: null
+                    });
+                }
             }
             else {
-                selectedPiece.element.style.transform = '';
-                setSelectedPiece({
-                    ...selectedPiece,
-                    element: null
-                });
+                let i = index(f, r);
+                if (hSquares.includes(i)) {
+                    let j = index(selectedPiece.square.file, selectedPiece.square.rank);
+                    let sq = squares.slice();
+                    let src = {
+                        file: selectedPiece.square.file,
+                        rank: selectedPiece.square.rank
+                    };
+                    let dst = {
+                        file: f,
+                        rank: r
+                    };
+                    clearHighlight();
+                    sq[i].premove = true;
+                    sq[j].premove = true;
+                    setPremoveSquares([i, j]);
+                    setSquares(sq);
+                    selectedPiece.element.style.transform = '';
+                    setSelectedPiece({
+                        square: null,
+                        element: null
+                    });
+                    setPremove({ src, dst });
+                }
+                else {
+                    selectedPiece.element.style.transform = '';
+                    setSelectedPiece({
+                        ...selectedPiece,
+                        element: null
+                    });
+                }
             }
         }
     }
