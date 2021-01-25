@@ -9,6 +9,10 @@ html {
     font-size: 16px;
 }
 
+body {
+    background-color: #edebe9 !important;
+}
+
 .title {
     font-size: 32px;
     align-self: center;
@@ -64,13 +68,14 @@ html {
     grid-template-rows: repeat(8, 1fr);
     height: 80vh;
     width: 80vh;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 3px 1px -2px rgba(0,0,0,0.2),0 1px 5px 0 rgba(0,0,0,0.12)
 }
 
 .game-container {
     display: grid;
     padding-top: 5vh;
     padding-bottom: 5vh;
-    grid-template-columns: auto min-content min-content 20vw auto;
+    grid-template-columns: auto 20vw min-content min-content 20vw auto;
     grid-column-gap: 10px;
     grid-template-rows: 90vh;
     user-select: none;
@@ -117,7 +122,7 @@ html {
 }
 
 #buttons {
-    grid-column: 2;
+    grid-column: 3;
     display: grid;
     grid-template-rows: 1fr 70px 70px 40px 1fr;
     grid-template-columns: 80px;
@@ -315,6 +320,7 @@ img {
     overflow-y: scroll;
     scrollbar-color: #e94560 #16213e;
     scrollbar-width: thin;
+    box-shadow: 2px 5px 0 rgba(0,0,0,0.225);
 }
 
 #move-history::-webkit-scrollbar {
@@ -416,3 +422,41 @@ img {
     height: 5vh;
     margin-left: -1vh;
 }
+
+.chatbox {
+    grid-column: 2;
+    display: grid;
+    grid-template-rows: auto min-content;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14),0 3px 1px -2px rgba(0,0,0,0.2),0 1px 5px 0 rgba(0,0,0,0.12);
+    background-color: #fff;
+    height: 90%;
+    align-self: center;
+    font-size: 15px;
+}
+
+.messages {
+    padding-left: 5px;
+    padding-top: 2px;
+    padding-right: 5px;
+}
+
+.message {
+    overflow-wrap: anywhere;
+}
+
+.send-message-box {
+    border-top-style: solid;
+    border-top-width: thin;
+    border-top-color: darkgray;
+}
+
+    .send-message-box input {
+        border: none;
+        background-color: rgb(255, 240, 240);
+        width: 100%;
+        padding: 5px;
+    }
+
+        .send-message-box input:focus::placeholder {
+            color: transparent;
+        }

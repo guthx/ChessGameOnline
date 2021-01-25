@@ -331,5 +331,15 @@ namespace ChessGameOnline.Services
             }
             return null;
         }
+
+        public async Task SendChatMessage(string message)
+        {
+            int gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                string player = _gameService.Gamestates[gameId].White == Context.UserIdentifier ? "White" : "Black";
+                await Clients.Group(gameId.ToString()).SendAsync("chatMessage", player, message);
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ import Board from './Board/Board';
 import RightMenu from './RightMenu';
 import EndGame from './EndGame';
 import Buttons from './Buttons';
+import Chat from './Chat';
 import useSound from 'use-sound';
 import moveSound from '../sounds/move1.mp3';
 import Gamestate from '../GameLogic/Gamestate';
@@ -55,6 +56,9 @@ export function Game(props) {
     positionHistoryRef.current = positionHistory;
     const [playMoveSound] = useSound(moveSound);
     const [picturesLoaded, setPicturesLoaded] = useState(0);
+    const [messages, setMessages] = useState([]);
+    const messagesRef = useRef();
+    messagesRef.current = messages;
     const picsLoadedRef = useRef();
     picsLoadedRef.current = picturesLoaded;
     const pictures = [WHITE_BISHOP, WHITE_KING, WHITE_KNIGHT, WHITE_PAWN, WHITE_QUEEN, WHITE_ROOK,
@@ -167,6 +171,12 @@ export function Game(props) {
             setGameOver(false);
             joinGame();
         });
+        props.hubConnection.on('chatMessage', (player, message) => {
+            setMessages([
+                ...messagesRef.current,
+                { player: player, message: message }
+            ]);
+        });
         joinGame();
     }, []);
 
@@ -250,9 +260,18 @@ export function Game(props) {
         else
             setTempGamestate(new Gamestate(positionHistory[positionNumber]));
     }
+
+    const sendMessage = (message) => {
+        props.hubConnection.invoke('SendChatMessage', message);
+    }
+
     if (picturesLoaded == pictures.length)
         return (
             <div className={'game-container'}>
+                <Chat
+                    messages={messages}
+                    sendMessage={sendMessage}
+                />
                 <Buttons
                     proposeDraw={proposeDraw}
                     respondDraw={respondDraw}
