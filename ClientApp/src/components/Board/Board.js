@@ -127,83 +127,93 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
         }
     }, [tempGamestate])
 
-    const mouseDown = (f, r, piece) => {
-        let i = index(f, r);
-        if (color === gamestate.toMove) {
-            if (hSquares.includes(i)) {
-                let j = index(selectedPiece.square.file, selectedPiece.square.rank);
-                let sq = squares.slice();
-                sq[i].symbol = selectedPiece.square.symbol;
-                sq[j].symbol = '-';
-                setSquares(sq);
-                clearHighlight();
-                //TODO Move
-                let src = String.fromCharCode(selectedPiece.square.file + 65) + (selectedPiece.square.rank + 1);
-                let dst = String.fromCharCode(f + 65) + (r + 1);
-                move(src, dst);
+    const mouseDown = (e, f, r, piece) => {
+        if (e.button == 2) {
+            selectedPiece.element.style.transform = '';
+            setSelectedPiece({
+                ...selectedPiece,
+                element: null
+            });
+        }
+        else {
+            let i = index(f, r);
+            if (color === gamestate.toMove) {
+                if (hSquares.includes(i)) {
+                    let j = index(selectedPiece.square.file, selectedPiece.square.rank);
+                    let sq = squares.slice();
+                    sq[i].symbol = selectedPiece.square.symbol;
+                    sq[j].symbol = '-';
+                    setSquares(sq);
+                    clearHighlight();
+                    //TODO Move
+                    let src = String.fromCharCode(selectedPiece.square.file + 65) + (selectedPiece.square.rank + 1);
+                    let dst = String.fromCharCode(f + 65) + (r + 1);
+                    move(src, dst);
+                }
+                else {
+                    if (gamestate.board[f][r] != null &&
+                        gamestate.board[f][r].color === color) {
+                        clearHighlight();
+                        if (gamestate.board[f][r].validMoves(gamestate).length > 0) {
+                            highlightValidMoves(f, r);
+                            setSelectedPiece({
+                                element: piece,
+                                square: squares[index(f, r)]
+                            });
+                        }
+                    }
+                    else {
+                        clearHighlight();
+                        setSelectedPiece({
+                            element: null,
+                            square: null
+                        });
+                    }
+                }
             }
             else {
-                if (gamestate.board[f][r] != null &&
-                    gamestate.board[f][r].color === color) {
+                clearPremoveSquares();
+                setPremove(null);
+                if (hSquares.includes(i)) {
+                    let j = index(selectedPiece.square.file, selectedPiece.square.rank);
+                    let sq = squares.slice();
                     clearHighlight();
-                    if (gamestate.board[f][r].validMoves(gamestate).length > 0) {
-                        highlightValidMoves(f, r);
+                    sq[i].premove = true;
+                    sq[j].premove = true;
+                    setPremoveSquares([i, j]);
+                    setSquares(sq);
+                    //TODO Move
+                    let src = {
+                        file: selectedPiece.square.file,
+                        rank: selectedPiece.square.rank
+                    };
+                    let dst = {
+                        file: f,
+                        rank: r
+                    };
+                    setPremove({ src, dst });
+                }
+                else {
+                    if (gamestate.board[f][r] != null &&
+                        gamestate.board[f][r].color === color) {
+                        clearHighlight();
+                        highlightPossibleMoves(f, r);
                         setSelectedPiece({
                             element: piece,
                             square: squares[index(f, r)]
                         });
                     }
-                }
-                else {
-                    clearHighlight();
-                    setSelectedPiece({
-                        element: null,
-                        square: null
-                    });
-                }
-            }
-        }
-        else {
-            clearPremoveSquares();
-            setPremove(null);
-            if (hSquares.includes(i)) {
-                let j = index(selectedPiece.square.file, selectedPiece.square.rank);
-                let sq = squares.slice();
-                clearHighlight();
-                sq[i].premove = true;
-                sq[j].premove = true;
-                setPremoveSquares([i, j]);
-                setSquares(sq);
-                //TODO Move
-                let src = {
-                    file: selectedPiece.square.file,
-                    rank: selectedPiece.square.rank
-                };
-                let dst = {
-                    file: f,
-                    rank: r
-                };
-                setPremove({ src, dst });
-            }
-            else {
-                if (gamestate.board[f][r] != null &&
-                    gamestate.board[f][r].color === color) {
-                    clearHighlight();
-                    highlightPossibleMoves(f, r);
-                    setSelectedPiece({
-                        element: piece,
-                        square: squares[index(f, r)]
-                    });
-                }
-                else {
-                    clearHighlight();
-                    setSelectedPiece({
-                        element: null,
-                        square: null
-                    });
+                    else {
+                        clearHighlight();
+                        setSelectedPiece({
+                            element: null,
+                            square: null
+                        });
+                    }
                 }
             }
         }
+        
     }
 
     const mouseMove = (e) => {
@@ -262,7 +272,23 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
         setSquares(sq);
     }
 
+    const dropPiece = () => {
+        if (selectedPiece.element != null) {
+            selectedPiece.element.style.transform = '';
+            setSelectedPiece({
+                square: null,
+                element: null
+            });
+        }  
+    }
+
+    const rightClick = (e) => {
+        e.preventDefault();
+        return false;
+    } 
+
     const mouseUp = (e, f, r) => {
+        if (e.button != 2)
         if (selectedPiece.element != null) {
             if (color === gamestate.toMove) {
                 let i = index(f, r);
@@ -276,12 +302,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                     sq[j].symbol = '-';
                     setSquares(sq);
                     clearHighlight();
-
-                    selectedPiece.element.style.transform = '';
-                    setSelectedPiece({
-                        square: null,
-                        element: null
-                    });
+                    dropPiece();
                     move(src, dst);
                 }
                 else {
@@ -310,11 +331,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                     sq[j].premove = true;
                     setPremoveSquares([i, j]);
                     setSquares(sq);
-                    selectedPiece.element.style.transform = '';
-                    setSelectedPiece({
-                        square: null,
-                        element: null
-                    });
+                    dropPiece();
                     setPremove({ src, dst });
                 }
                 else {
@@ -369,11 +386,12 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                         color={Color.BLACK}
                         points={gamestate.points}
                     />
-                <div
-                    onMouseMove={e => mouseMove(e)}
-                    onMouseLeave={e => mouseUp(e)}
-                    className={'board'}>
-                    {squares.map((square, i) => (
+                    <div
+                        onMouseMove={e => mouseMove(e)}
+                        onMouseLeave={e => mouseUp(e)}
+                        onContextMenu={e => rightClick(e)}
+                        className={'board'}>
+                        {squares.map((square, i) => (
                             <Square
                                 state={square}
                                 key={i}
@@ -381,7 +399,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                                 mouseUp={mouseUp}
                                 promote={promote}
                             />
-                    ))}
+                        ))}
                     </div>
                     <PieceDifference
                         pieceDifference={gamestate.pieceDifference}
@@ -398,11 +416,12 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                         color={Color.WHITE}
                         points={gamestate.points}
                     />
-                <div
-                    onMouseMove={e => mouseMove(e)}
-                    onMouseLeave={e => mouseUp(e)}
-                    className={'board'}>
-                    {squares.slice().reverse().map((square, i) => (
+                    <div
+                        onMouseMove={e => mouseMove(e)}
+                        onMouseLeave={e => mouseUp(e)}
+                        onContextMenu={e => rightClick(e)}
+                        className={'board'}>
+                        {squares.slice().reverse().map((square, i) => (
                             <Square
                                 state={square}
                                 key={i}
@@ -410,7 +429,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                                 mouseUp={mouseUp}
                                 promote={promote}
                             />
-                    ))}
+                        ))}
                     </div>
                     <PieceDifference
                         pieceDifference={gamestate.pieceDifference}
@@ -420,7 +439,7 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                 </div>
             );
     }
-    
+
 }
 
 export default React.memo(Board, (prevProps, nextProps) => {

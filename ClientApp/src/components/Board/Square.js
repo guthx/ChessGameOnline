@@ -46,7 +46,7 @@ function Square(props) {
             <div
                 id={String.fromCharCode(65 + state.file) + (state.rank + 1)}
                 className={squareClass}
-                onMouseDown={(e) => props.mouseDown(state.file, state.rank, e.target.lastChild)}
+                onMouseDown={(e) => props.mouseDown(e, state.file, state.rank, e.target.lastChild)}
                 onMouseUp={(e) => props.mouseUp(e, state.file, state.rank)}
                 onMouseEnter={() => mouseEnter()}
                 onMouseLeave={() => mouseLeave()}

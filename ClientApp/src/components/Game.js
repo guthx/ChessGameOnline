@@ -196,6 +196,7 @@ export function Game(props) {
 
     const proposeTakeback = () => {
         props.hubConnection.invoke('RequestTakeback');
+        setPremove(null);
         setTakebackState(drawStates.WAITING);
     };
 
