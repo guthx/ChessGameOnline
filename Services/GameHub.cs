@@ -62,7 +62,6 @@ namespace ChessGameOnline.Services
         public async Task<int> CreateGame(int time, int increment)
         {
             int gameId = _gameService.CreateGame(Context.UserIdentifier, time, increment);
-            
             await Groups.AddToGroupAsync(Context.ConnectionId, gameId.ToString());
             return gameId;
         }
@@ -175,6 +174,15 @@ namespace ChessGameOnline.Services
             if (timeControl != null)
             {
                 _gameService.PlayerSearchingGame.Remove(timeControl);
+            }
+        }
+
+        public void CancelNewGame()
+        {
+            var gameId;
+            if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
+            {
+                _gameService.RemoveGame(gameId);
             }
         }
 

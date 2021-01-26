@@ -44,6 +44,7 @@ export function Home(props) {
     }
 
     const cancelCreate = () => {
+        props.hubConnection.invoke("CancelNewGame");
         setState(HomeStates.DEFAULT);
     }
 

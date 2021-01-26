@@ -169,7 +169,7 @@ namespace ChessGameOnline.Services
                 gamestate.DrawProposed = String.Empty;
                 _hubContext.Clients.Group(gameId.ToString()).SendAsync("drawRejected");
             };
-           
+            PlayersGamestates[player] = gameId;
             return gameId;
         }
         
@@ -215,34 +215,34 @@ namespace ChessGameOnline.Services
             MultiplayerGamestate gamestate;
             if (Gamestates.TryGetValue(gameId, out gamestate))
             {
+                
                 string color;
                 if (gamestate.White == player)
                 {
-                    PlayersGamestates[player] = gameId;
                     color = "WHITE";
                 } else if (gamestate.Black == player)
                 {
-                    PlayersGamestates[player] = gameId;
                     color = "BLACK";
                 } else if (gamestate.White == String.Empty)
                 {
                     gamestate.White = player;
-                    PlayersGamestates[player] = gameId;
                     color = "WHITE";
                 } else if (gamestate.Black == String.Empty)
                 {
                     gamestate.Black = player;
-                    PlayersGamestates[player] = gameId;
                     color = "BLACK";
                 } else
                 {
                     color = "SPECTATE";
                 }
-                if (PlayersGamestates.TryGetValue(player, out prevGame) &&
-                    prevGame != gameId &&
-                    color != "SPECTATE")
+                if (color != "SPECTATE")
                 {
-                    RemoveGame(prevGame, player);
+                    if (PlayersGamestates.TryGetValue(player, out prevGame) &&
+                        prevGame != gameId)
+                    {
+                        RemoveGame(prevGame, player);
+                    }
+                    PlayersGamestates[player] = gameId;
                 }
                 return color;
             } 
