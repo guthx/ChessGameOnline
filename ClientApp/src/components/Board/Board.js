@@ -3,7 +3,7 @@ import { Color } from '../../enums';
 import PieceDifference from './PieceDifference';
 import Square from './Square';
 
-function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, setPremove, tempGamestate }) {
+function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, setPremove, tempGamestate, gameResult }) {
     const [squares, setSquares] = useState([]);
     const [tempSquares, setTempSquares] = useState([]);
     const [hSquares, setHSquares] = useState([]);
@@ -128,6 +128,8 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
     }, [tempGamestate])
 
     const mouseDown = (e, f, r, piece) => {
+        if (gameResult != "ACTIVE")
+            return false;
         if (e.button == 2) {
             selectedPiece.element.style.transform = '';
             setSelectedPiece({
@@ -288,6 +290,8 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
     } 
 
     const mouseUp = (e, f, r) => {
+        if (gameResult != "ACTIVE")
+            return false;
         if (e.button != 2)
         if (selectedPiece.element != null) {
             if (color === gamestate.toMove) {
@@ -345,33 +349,57 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
         }
     }
 
-    if (tempSquares.length > 0) {
+    if (tempGamestate != null && tempSquares.length > 0) {
         if (color === Color.WHITE || color === Color.SPECTATE)
             return (
-                <div
-                    className={'board'}>
-                    {tempSquares.map((square, i) => (
-                        <Square
-                            state={square}
-                            mouseDown={() => { }}
-                            mouseUp={() => { }}
-                            key={i}
-                        />
-                    ))}
+                <div id={'board-container'}>
+                    <PieceDifference
+                        pieceDifference={tempGamestate.pieceDifference}
+                        color={Color.BLACK}
+                        points={tempGamestate.points}
+                    />
+                    <div
+                        className={'board'}>
+                        {tempSquares.map((square, i) => (
+                            <Square
+                                state={square}
+                                mouseDown={() => { }}
+                                mouseUp={() => { }}
+                                key={i}
+                            />
+                        ))}
+                    </div>
+                    <PieceDifference
+                        pieceDifference={tempGamestate.pieceDifference}
+                        color={Color.WHITE}
+                        points={tempGamestate.points}
+                    />
                 </div>
             );
         else
             return (
-                <div
-                    className={'board'}>
-                    {tempSquares.slice().reverse().map((square, i) => (
-                        <Square
-                            mouseDown={() => { }}
-                            mouseUp={() => { }}
-                            state={square}
-                            key={i}
-                        />
-                    ))}
+                <div id={'board-container'}>
+                    <PieceDifference
+                        pieceDifference={tempGamestate.pieceDifference}
+                        color={Color.WHITE}
+                        points={tempGamestate.points}
+                    />
+                    <div
+                        className={'board'}>
+                        {tempSquares.slice().reverse().map((square, i) => (
+                            <Square
+                                mouseDown={() => { }}
+                                mouseUp={() => { }}
+                                state={square}
+                                key={i}
+                            />
+                        ))}
+                    </div>
+                    <PieceDifference
+                        pieceDifference={tempGamestate.pieceDifference}
+                        color={Color.BLACK}
+                        points={tempGamestate.points}
+                    />
                 </div>
             );
     }

@@ -14,7 +14,8 @@ function Buttons ({
     respondTakeback,
     takebackState,
     drawState,
-    resign
+    resign,
+    gameResult
 }){
     return (
         <div id={'buttons'}>
@@ -22,10 +23,13 @@ function Buttons ({
                 proposeDraw={proposeDraw}
                 respondDraw={respondDraw}
                 drawState={drawState}
+                gameResult={gameResult}
             />
             <button
-                className={'game-button resign-button'}
-                onClick={() => resign()}>
+                className={gameResult == "ACTIVE" ? 'game-button resign-button' : 'game-button resign-button pending'}
+                onClick={() => resign()}
+                disabled={gameResult != "ACTIVE"}
+            >
                 <FlagIcon />
                 <div className={'tooltip-text'}>
                     Resign
@@ -35,6 +39,7 @@ function Buttons ({
                 proposeTakeback={proposeTakeback}
                 respondTakeback={respondTakeback}
                 takebackState={takebackState}
+                gameResult={gameResult}
             />
         </div>
     );
@@ -43,8 +48,23 @@ function Buttons ({
 function Takeback({
     proposeTakeback,
     respondTakeback,
-    takebackState
+    takebackState,
+    gameResult
 }) {
+    if (gameResult != "ACTIVE")
+        return (
+            <div id={'takeback'}>
+                <button
+                    className={'game-button takeback-button pending'}
+                    disabled={true}
+                >
+                    <HistoryIcon />
+                    <div className={'tooltip-text'}>
+                        Request takeback
+                            </div>
+                </button>
+            </div>
+            );
     switch (takebackState) {
         case drawStates.NEUTRAL:
             return (
@@ -99,8 +119,23 @@ function Takeback({
 function Draw({
     proposeDraw,
     respondDraw,
-    drawState
-}){
+    drawState,
+    gameResult
+}) {
+    if (gameResult != "ACTIVE")
+        return (
+            <div id={'draw'}>
+                <button
+                    className={'game-button draw-button pending'}
+                    disabled={true}
+                >
+                    <Icon icon={handshakeIcon} />
+                    <div className={'tooltip-text'}>
+                        Propose draw
+                            </div>
+                </button>
+            </div>
+        ); 
     switch (drawState) {
         case drawStates.NEUTRAL:
             return (
@@ -163,5 +198,6 @@ function Draw({
 
 export default React.memo(Buttons, (prevProps, nextProps) => {
     return prevProps.drawState === nextProps.drawState &&
-        prevProps.takebackState === nextProps.takebackState;
+        prevProps.takebackState === nextProps.takebackState &&
+        prevProps.gameResult === nextProps.gameResult;
 });

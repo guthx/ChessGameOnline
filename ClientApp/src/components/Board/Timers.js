@@ -3,7 +3,7 @@ import Timer from './Timer';
 import { Color } from '../../enums';
 
 function Timers(props) {
-    if (props.turnCount <= 0) {
+    if ((props.turnCount == 1 && props.toMove == Color.WHITE) || props.gameResult != "ACTIVE") {
         return (
             <div className={'timers-container'}>
                 <Timer time={props.whiteTime / 1000} highlight={false} />

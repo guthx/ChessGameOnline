@@ -115,6 +115,7 @@ export function Game(props) {
             var newGamestate = new Gamestate(response.fen);
             setLastMove(response.lastMove);
             setGamestate(newGamestate);
+            console.log(response.gameResult);
             if (response.gameResult != undefined) {
                 setGameResult(response.gameResult);
             }
@@ -125,7 +126,6 @@ export function Game(props) {
             setAwaitingPromotion(null);
             if (response.gameResult != undefined) {
                 setGameResult(response.gameResult);
-                setGameOver(true);
             }
             if (colorRef.current == newGamestate.toMove) {
                 setToMove(true);
@@ -291,6 +291,7 @@ export function Game(props) {
                     takebackState={takebackState}
                     drawState={drawState}
                     resign={resign}
+                    gameResult={gameResult}
                 />
                 <Board
                     gamestate={gamestate}
@@ -301,6 +302,7 @@ export function Game(props) {
                     promote={promote}
                     setPremove={setPremove}
                     lastMove={lastMove}
+                    gameResult={gameResult}
                 />
                 <RightMenu
                     whiteTime={timers.whiteTime}
@@ -309,6 +311,8 @@ export function Game(props) {
                     color={color}
                     moveHistory={moveHistory}
                     viewState={viewPreviousState}
+                    turnCount={gamestate.turnCount}
+                    gameResult={gameResult}
                 />
                 <EndGame
                     gameResult={gameResult}
