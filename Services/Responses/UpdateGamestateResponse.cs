@@ -27,7 +27,8 @@ namespace ChessGameOnline.Services.Responses
                 GameResult = gamestate.GameResult.ToString();
             else
                 GameResult = null;
-            MoveNotation = gamestate.MoveHistory.Last();
+            if (gamestate.MoveHistory.Count > 0)
+                MoveNotation = gamestate.MoveHistory.Last();
         }
     }
 }

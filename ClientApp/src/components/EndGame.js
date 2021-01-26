@@ -34,21 +34,11 @@ function EndGame({
         case rematchStates.NEUTRAL:
             rematchComponent = (
                 <div id={'rematch'}>
-                    <div id={'rematch-text'}>
-                        Rematch?
-                        </div>
-                    <div id={'rematch-buttons'}>
-                        <button
-                            class={'game-button accept-button'}
-                            onClick={() => respondRematch(true)}>
-                            <CheckIcon />
-                        </button>
-                        <button
-                            class={'game-button decline-button'}
-                            onClick={() => respondRematch(false)}>
-                            <CloseIcon />
-                        </button>
-                    </div>
+                    <button
+                        className={'game-button accept-button'}
+                        onClick={() => respondRematch(true)} >
+                        Rematch
+                    </button>
                 </div>
             );
             break;
@@ -56,21 +46,16 @@ function EndGame({
             rematchComponent = (
                 <div id={'rematch'}>
                     <div id={'rematch-text'}>
-                        Awaiting opponent...
-                        </div>
-                    <div id={'rematch-buttons'}>
-                        <button
-                            class={'game-button accept-button pending'}
-                            disabled={true}>
-                            <CheckIcon />
-                        </button>
-                        <button
-                            class={'game-button decline-button'}
-                            onClick={() => respondRematch(false)}>
-                            <CloseIcon />
-                        </button>
+                        Awaiting opponent
                     </div>
-                </div>
+                    <button
+                        className={'game-button accept-button pending'}
+                        onClick={() => respondRematch(true)}
+                        disabled={true}
+                    >
+                        Rematch
+                    </button>
+                </div >
             );
             break;
         case rematchStates.ACCEPTED:
@@ -78,20 +63,14 @@ function EndGame({
                 <div id={'rematch'}>
                     <div id={'rematch-text'}>
                         Opponent proposed rematch
-                        </div>
-                    <div id={'rematch-buttons'}>
-                        <button
-                            class={'game-button accept-button'}
-                            onClick={() => respondRematch(true)}>
-                            <CheckIcon />
-                        </button>
-                        <button
-                            class={'game-button decline-button'}
-                            onClick={() => respondRematch(false)}>
-                            <CloseIcon />
-                        </button>
                     </div>
-                </div>
+                    <button
+                        className={'game-button accept-button'}
+                        onClick={() => respondRematch(true)}
+                    >
+                        Rematch
+                    </button>
+                </div >
             );
             break;
         case rematchStates.REJECTED:
@@ -109,7 +88,15 @@ function EndGame({
     }
     return (
         <Dialog open={checkmate} fullWidth={true} maxWidth={'xs'}>
-            <DialogTitle id="dialog-title" className={'title'}>Game over</DialogTitle>
+            <div className={'dialog-header'}>
+                <div className={'title'}>
+                    Game over
+                </div>
+                <button
+                    onClick={() => respondRematch(false)}>
+                    <CloseIcon />
+                </button>
+            </div>
             <div className={'winner'}>
                 {message}
             </div>

@@ -179,7 +179,7 @@ namespace ChessGameOnline.Services
 
         public void CancelNewGame()
         {
-            var gameId;
+            int gameId;
             if (_gameService.PlayersGamestates.TryGetValue(Context.UserIdentifier, out gameId))
             {
                 _gameService.RemoveGame(gameId);

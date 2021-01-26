@@ -24,6 +24,7 @@ import MiniKnight from '../images/cburnett/miniN.svg';
 import MiniBishop from '../images/cburnett/miniB.svg';
 import MiniRook from '../images/cburnett/miniR.svg';
 import MiniQueen from '../images/cburnett/miniQ.svg';
+import WarningIcon from '@material-ui/icons/Warning';
 import Spinner from '../images/spinner.gif';
 import { Color, drawStates, rematchStates } from '../enums';
 
@@ -217,7 +218,9 @@ export function Game(props) {
     const joinGame = () => {
         props.hubConnection.invoke('JoinGame', parseInt(gameId))
             .then(color => {
-                if (color == "WHITE")
+                if (color == null)
+                    setColor(null);
+                else if (color == "WHITE")
                     setColor(Color.WHITE);
                 else if (color == "BLACK")
                     setColor(Color.BLACK);
@@ -264,6 +267,14 @@ export function Game(props) {
     const sendMessage = (message) => {
         props.hubConnection.invoke('SendChatMessage', message);
     }
+
+    if (color == null)
+        return (
+            <div className={'warning'}>
+                <WarningIcon /><br/>
+                The game of the specified id doesn't exist.
+            </div>
+            )
 
     if (picturesLoaded == pictures.length)
         return (

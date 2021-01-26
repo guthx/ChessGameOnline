@@ -93,6 +93,19 @@ body {
     width: 60%;
 }
 
+.warning {
+    position: relative;
+    margin-top: 40vh;
+    text-align: center;
+    font-size: 24px;
+}
+
+.warning svg {
+    height: 100px;
+    width: 100px;
+    color: red;
+}
+
 .slider {
     -webkit-appearance: none;
     width: 100%;
@@ -157,6 +170,7 @@ body {
 .winner {
     font-size: 26px;
     align-self: center;
+    padding-bottom: 20px;
 }
 
 .board {
@@ -419,7 +433,6 @@ img {
     overflow-y: scroll;
     scrollbar-color: #e94560 #16213e;
     scrollbar-width: thin;
-    box-shadow: 2px 5px 0 rgba(0,0,0,0.225);
 }
 
 #move-history::-webkit-scrollbar {
@@ -447,6 +460,7 @@ img {
     height: 60vh;
     background-color: #16213e;
     color: #ffffff;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.225);
 }
 
 #move-history-turn-numbers {
@@ -589,4 +603,29 @@ img {
     background-color: deepskyblue;
     border-color: darkgray;
     cursor: pointer;
+}
+
+.dialog-header {
+    display: grid;
+    grid-template-columns: auto min-content;
+}
+
+.dialog-header .title {
+    font-size: 28px;
+    justify-self: center;
+    margin-left: 28px;
+}
+
+.dialog-header button {
+    justify-self: end;
+    border: none;
+    background-color: inherit;
+    padding: 2px;
+    line-height: 0;
+}
+
+#rematch button {
+    width: 120px;
+    height: 35px;
+    justify-self: center;
 }
