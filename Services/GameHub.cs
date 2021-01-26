@@ -169,6 +169,15 @@ namespace ChessGameOnline.Services
             
         }
 
+        public void CancelSearch()
+        {
+            var timeControl = _gameService.PlayerSearchingGame.FirstOrDefault(pair => pair.Value == Context.UserIdentifier).Key;
+            if (timeControl != null)
+            {
+                _gameService.PlayerSearchingGame.Remove(timeControl);
+            }
+        }
+
         public async Task ProposeDraw()
         {
             int gameId;

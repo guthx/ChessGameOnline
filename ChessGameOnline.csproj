@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <Compile Remove="ClientApp\src\components\Board\Labels.cs" />
+    <Compile Remove="ClientApp\src\components\Board\TimeControlSelect.cs" />
     <Compile Remove="ClientApp\src\components\RightMenu.cs" />
   </ItemGroup>
 
