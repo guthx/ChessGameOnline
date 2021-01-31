@@ -60,11 +60,9 @@ export default function App()  {
         <div>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossOrigin="anonymous" />
-
-            <header id={'top'}>
-                <Link to="/" replace>ChessGameOnline</Link>
-            </header>
-                
+    
+           
+     
             <Route
                 exact path='/'
                 render={(props) => (
@@ -83,3 +81,10 @@ export default function App()  {
       
     );
 }
+
+
+/*
+ *  <header id={'top'}>
+                <Link to="/" replace>ChessGameOnline</Link>
+            </header>
+            */

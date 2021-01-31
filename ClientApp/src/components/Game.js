@@ -169,6 +169,7 @@ export function Game(props) {
             setRematchState(rematchStates.NEUTRAL);
             setDrawState(drawStates.NEUTRAL);
             setTakebackState(drawStates.NEUTRAL);
+            setGameResult("ACTIVE");
             setGameOver(false);
             joinGame();
         });

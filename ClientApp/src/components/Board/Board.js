@@ -131,11 +131,13 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
         if (gameResult != "ACTIVE")
             return false;
         if (e.button == 2) {
-            selectedPiece.element.style.transform = '';
-            setSelectedPiece({
-                ...selectedPiece,
-                element: null
-            });
+            if (selectedPiece.element != null) {
+                selectedPiece.element.style.transform = '';
+                setSelectedPiece({
+                    ...selectedPiece,
+                    element: null
+                });
+            } 
         }
         else {
             let i = index(f, r);
