@@ -49,8 +49,31 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
                 sq[index(to.file, to.rank)].moved = true;
             }
             if (gamestate.check != undefined) {
-                console.log('checked');
                 sq[index(gamestate.check.file, gamestate.check.rank)].checked = true;
+            }
+            if (awaitingPromotion) {
+                var file = awaitingPromotion[0].toUpperCase().charCodeAt() - 'A'.charCodeAt();
+                var rank = awaitingPromotion[1] - 1;
+                if (color === Color.WHITE || color === Color.SPECTATE) {
+                    sq[index(file, rank)].symbol = 'Q'
+                    sq[index(file, rank)].promotion = true;
+                    sq[index(file, rank - 1)].symbol = 'R'
+                    sq[index(file, rank - 1)].promotion = true;
+                    sq[index(file, rank - 2)].symbol = 'N'
+                    sq[index(file, rank - 2)].promotion = true;
+                    sq[index(file, rank - 3)].symbol = 'B'
+                    sq[index(file, rank - 3)].promotion = true;
+                }
+                else {
+                    sq[index(file, rank)].symbol = 'q';
+                    sq[index(file, rank)].promotion = true;
+                    sq[index(file, rank + 1)].symbol = 'r';
+                    sq[index(file, rank + 1)].promotion = true;
+                    sq[index(file, rank + 2)].symbol = 'n';
+                    sq[index(file, rank + 2)].promotion = true;
+                    sq[index(file, rank + 3)].symbol = 'b';
+                    sq[index(file, rank + 3)].promotion = true;
+                }
             }
             setSquares(sq);
             setHSquares([]);
@@ -59,9 +82,9 @@ function Board({ gamestate, awaitingPromotion, color, move, promote, lastMove, s
     }, [gamestate]);
 
     useEffect(() => {
-        if (awaitingPromotion != null) {
+        if (awaitingPromotion != null && squares.length == 64) {
             let sq = squares.slice();
-            var file = awaitingPromotion[0].charCodeAt() - 'A'.charCodeAt();
+            var file = awaitingPromotion[0].toUpperCase().charCodeAt() - 'A'.charCodeAt();
             var rank = awaitingPromotion[1] - 1;
             if (color === Color.WHITE || color === Color.SPECTATE) {
                 sq[index(file, rank)].symbol = 'Q'

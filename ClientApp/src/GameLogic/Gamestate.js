@@ -176,7 +176,6 @@ export default class Gamestate {
         if (this.toMove == Color.WHITE) {
             if (this.whiteKing.isChecked(this)) {
                 this.check = { file: this.whiteKing.file, rank: this.whiteKing.rank };
-                console.log('test');
             }
         }
         else {

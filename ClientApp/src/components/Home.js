@@ -55,7 +55,6 @@ export function Home(props) {
     }));
 
     const classes = useStyles();
-    console.log(props.history);
 
     switch (state) {
         case HomeStates.DEFAULT:

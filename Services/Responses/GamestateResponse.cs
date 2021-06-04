@@ -18,6 +18,7 @@ namespace ChessGameOnline.Controllers.Responses
         public string GameResult;
         public List<string> MoveHistory;
         public List<string> PositionHistory;
+        public string AwaitingPromotion;
 
         public GamestateResponse(MultiplayerGamestate gamestate)
         {
@@ -32,6 +33,8 @@ namespace ChessGameOnline.Controllers.Responses
                 GameResult = null;
             MoveHistory = gamestate.MoveHistory;
             PositionHistory = gamestate.PositionHistory;
+            if (gamestate.awaitingPromotion != null)
+                AwaitingPromotion = gamestate.awaitingPromotion.ToString();
         }
     }
 }

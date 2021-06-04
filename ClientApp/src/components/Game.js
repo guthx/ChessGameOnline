@@ -71,7 +71,6 @@ export function Game(props) {
             const img = new Image();
             img.src = picture;
             img.onload = () => {
-                console.log(picturesLoaded);
                 setPicturesLoaded(picsLoadedRef.current + 1);
             }
         });
@@ -115,7 +114,6 @@ export function Game(props) {
             var newGamestate = new Gamestate(response.fen);
             setLastMove(response.lastMove);
             setGamestate(newGamestate);
-            console.log(response.gameResult);
             if (response.gameResult != undefined) {
                 setGameResult(response.gameResult);
             }
@@ -123,7 +121,6 @@ export function Game(props) {
                 whiteTime: response.whiteTime,
                 blackTime: response.blackTime
             });
-            setAwaitingPromotion(null);
             if (response.gameResult != undefined) {
                 setGameResult(response.gameResult);
             }
@@ -137,6 +134,10 @@ export function Game(props) {
             }
             setMoveHistory(response.moveHistory);
             setPositionHistory(response.positionHistory);
+            if (!response.awaitingPromotion)
+                setAwaitingPromotion(null);
+            else
+                setAwaitingPromotion(response.awaitingPromotion);
         });
         props.hubConnection.on('awaitingPromotion', position => {
             setAwaitingPromotion(position);
@@ -233,6 +234,7 @@ export function Game(props) {
 
     const promote = (type) => {
         props.hubConnection.invoke('Promote', type);
+        setAwaitingPromotion(null);
     };
 
     const proposeDraw = () => {
@@ -258,7 +260,6 @@ export function Game(props) {
     }
 
     const viewPreviousState = (positionNumber) => {
-        console.log(positionNumber);
         if (positionNumber >= positionHistory.length - 1)
             setTempGamestate(null);
         else
